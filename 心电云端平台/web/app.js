@@ -4,7 +4,8 @@ const state = {
   sessions: [], selected: null, follow: true, busy: false, wave: null,
   token: sessionStorage.getItem('ecg-token') || '', generation: 0, analysisGeneration: 0,
   analyzing: null, analysis: null, analysisKey: '', tableKey: '', views: new Map(), cloud: false,
-  auth: false, ready: false, user: null, csrf: '', epoch: 0, listEpoch: 0, page: 0, total: 0, filters: {}
+  auth: false, ready: false, user: null, csrf: '', epoch: 0, listEpoch: 0, page: 0, total: 0, filters: {},
+  beatFilter:'all', amplitude:1
 };
 const PAGE_SIZE = 10;
 const sources = {demo: '本地合成', serial: '串口采集', replay: '文件回放', unknown: '来源未知'};
@@ -28,11 +29,27 @@ function currentBeats() {
     ? state.analysis.model_result?.beats || [] : [];
 }
 function notice(value) { text('notice', value); $('notice').hidden = !value; }
+function connectionStatus(problem=null) {
+  const banner=$('connection-banner');if(!banner)return;
+  banner.hidden=!problem;
+  text('connection-title',problem?.title || '服务已连接');text('connection-message',problem?.message || '');
+  text('service',problem?'● '+problem.title:'● 服务已连接');
+  $('service').classList.toggle('off',!!problem);
+}
+function connectionProblem(error,status=0){
+  return ECGConnection.describeFailure(error,status,typeof navigator==='undefined'||navigator.onLine!==false);
+}
 async function api(path, options = {}) {
   const epoch=state.epoch;
   const {timeoutMs = 7000, ...requestOptions} = options;
   const headers=state.auth ? {'X-CSRF-Token':state.csrf} : {'X-API-Key':state.token};
-  const response = await fetch(path, {...requestOptions, cache:'no-store', credentials:'same-origin', headers:{...headers, ...options.headers}, signal:AbortSignal.timeout(timeoutMs)});
+  let response;
+  try {response = await fetch(path, {...requestOptions, cache:'no-store', credentials:'same-origin', headers:{...headers, ...options.headers}, signal:AbortSignal.timeout(timeoutMs)});}
+  catch(cause){
+    if(epoch!==state.epoch)throw new Error('登录状态已改变');
+    const problem=connectionProblem(cause);connectionStatus(problem);
+    const error=new Error(problem.message);error.connection=problem;throw error;
+  }
   if(epoch!==state.epoch) throw new Error('登录状态已改变');
   const respondingUser=response.headers?.get('X-ECG-User');
   if(state.auth && state.user && respondingUser && respondingUser!==state.user.id) {
@@ -42,8 +59,11 @@ async function api(path, options = {}) {
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
     if(epoch!==state.epoch) throw new Error('登录状态已改变');
-    if(response.status===401 && state.auth && !path.endsWith('/login')) showLogin('登录已过期，请重新登录');
-    throw new Error(typeof body.detail === 'string' ? body.detail : '请求失败 (' + response.status + ')');
+    if(response.status===401 && state.auth && !path.endsWith('/login') && !path.endsWith('/me')) showLogin('登录已过期，请重新登录');
+    const problem=response.status>=500?connectionProblem(null,response.status):null;
+    if(problem)connectionStatus(problem);
+    const error=new Error(problem?.message || (typeof body.detail === 'string' ? body.detail : '请求失败 (' + response.status + ')'));
+    error.status=response.status;error.connection=problem;throw error;
   }
   return response;
 }
@@ -94,7 +114,7 @@ async function refresh() {
     renderDevices(device);
     if(!state.sessions.some(s=>s.session_id===state.selected)) selectSession(state.sessions[0]?.session_id || null);
     renderList(); $('empty').hidden=!!state.selected; $('content').hidden=!state.selected || state.wave?.session?.session_id!==state.selected;
-    text('service','● 服务已连接'); $('service').classList.remove('off'); notice('');
+    connectionStatus(); notice('');
     if(state.selected) await Promise.all([loadWave(),loadAnalysis()]);
   } catch(error) {
     if(epoch!==state.epoch || listEpoch!==state.listEpoch) return;
@@ -174,19 +194,21 @@ function renderAnalysis(result) {
   }
 }
 function renderBeats() {
-  const beats=currentBeats(), v=view(), pages=Math.max(1,Math.ceil(beats.length/PAGE_SIZE));
+  const all=currentBeats(), beats=ECGDesktop.filteredBeats(all,state.beatFilter), v=view(), pages=Math.max(1,Math.ceil(beats.length/PAGE_SIZE));
   v.page=Math.min(v.page,pages-1);
   if(v.selected && !beats.some(b=>beatKey(b)===v.selected)) v.selected=null;
-  $('beats-panel').hidden=!beats.length; $('marker-legend').hidden=!beats.length;
-  if(!beats.length) {
+  $('beats-panel').hidden=!all.length; $('marker-legend').hidden=!all.length;
+  $('beats-empty').hidden=!all.length || !!beats.length;
+  $('beat-previous').disabled=!beats.length;$('beat-next').disabled=!beats.length;
+  if(!all.length) {
     $('beats-body').replaceChildren(); state.tableKey=''; return;
   }
-  text('beats-total',count(beats.length)+' 搏');
+  text('beats-total',count(beats.length)+' / '+count(all.length)+' 搏');
   text('beats-page','第 '+(v.page+1)+' / '+pages+' 页');
   $('beats-prev').disabled=v.page===0; $('beats-next').disabled=v.page>=pages-1;
   const selected=beats.find(b=>beatKey(b)===v.selected);
   text('selected-beat',selected?'已选 '+(selected.sample_id/360).toFixed(3)+' s · '+selected.label:'选择时间可查看对应波形');
-  const tableKey=[state.analysisKey,v.page,v.selected].join('|');
+  const tableKey=[state.analysisKey,state.beatFilter,v.page,v.selected].join('|');
   if(state.tableKey===tableKey) return;
   state.tableKey=tableKey;
   const body=$('beats-body'); body.replaceChildren();
@@ -279,6 +301,7 @@ function draw() {
   const wave=state.wave, points=wave?.session?.session_id===state.selected?wave.points:[], values=points.filter(p=>p[1]!==null).map(p=>p[1]);
   let lo=values.length?Math.min(...values):0,hi=values.length?Math.max(...values):4095;
   const spread=Math.max(hi-lo,200);lo=Math.max(0,lo-spread*.2);hi=Math.min(4095,hi+spread*.2);
+  const center=(lo+hi)/2,range=(hi-lo)/state.amplitude;lo=center-range/2;hi=center+range/2;
   const end=wave?.end_sample??3599,start=wave?.start_sample??0,span=Math.max(end-start,360);
   for(let y=0;y<=4;y++) {
     const py=top+ph*y/4;c.strokeStyle='#234048';c.lineWidth=.6;c.beginPath();c.moveTo(left,py);c.lineTo(w-right,py);c.stroke();
