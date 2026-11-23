@@ -1,0 +1,31 @@
+# 心电云端与工作台
+
+接收树莓派记录，按账号与设备管理数据，提供波形回看及后台分析。手机和电脑共用网页；Windows 启动器在 `deploy/desktop/`。
+
+## 使用与开发入口
+
+- [下载电脑端与打开网页](../README.md#应用下载)
+- [安装、运行、模型开关与研究复跑](README.txt) — 保留完整操作步骤；其中标注日期的实测内容属于对应阶段。
+- [当前进度及部署验证](docs/云端工作台迭代.md) — 功能、版本、备份与待验收项的统一入口。
+- [Windows 客户端构建](deploy/desktop/README.md)、[Linux 部署](deploy/linux/部署说明.txt)、[手机 HTTPS 访问](deploy/linux/手机公网访问说明.txt)
+- [Android 试用版下载与验收边界](../docs/手机端与安卓安装包.md)、[Android 工程与构建](android/README.md)
+- 历史流程复现：[2026-10-29 笔记本中转](docs/自动连接说明.txt)、[2026-10-28 开发板演示](docs/开发板上传演示说明.txt)。新账号登录使用根 README 的 HTTPS 入口。
+
+## 目录与职责
+
+| 位置 | 职责 |
+| --- | --- |
+| [server.py](server.py)、[run_server.py](run_server.py) | 服务端与启动入口 |
+| `*_store.py`、[device_routes.py](device_routes.py)、[analysis_tasks.py](analysis_tasks.py) | 账号、设备、记录与持久分析任务 |
+| [web/](web/) | 手机/电脑网页、PWA、波形与操作界面 |
+| [android/](android/README.md) | Android 试用客户端、资源与构建工具 |
+| [cloud_model/](cloud_model/) | 云端模型适配器及固定版本依赖；[来源](cloud_model/SOURCE.json) |
+| [research/](research/) | 离线 QRS/RR、HRV 评估，不进入生产部署包 |
+| [deploy/](deploy/) | 云端、Windows 打包和升级工具 |
+| [tests/](tests/) | Python、网页脚本与 Windows 启动器检查 |
+| [docs/](docs/) | 当前设计、连接说明与开发进度 |
+| [docs/archive/](docs/archive/README.md) | 历史技术方案、阶段验证 |
+
+根目录 `.cmd`、`.ps1`、连接及验证脚本保持原路径，按完整使用说明运行。`requirements*.txt` 仍放在模块根目录。测试方式统一见 [贡献指南](../CONTRIBUTING.md#检查与实物联调)。
+
+`work/`、`outputs/`、`deploy/dist/`、`.cloud_private/` 和采集数据属于本地运行内容，不加入 Git；下载包通过 Release 或正式网页分发。
