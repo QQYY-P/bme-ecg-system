@@ -13,6 +13,7 @@ STM32 心电采集、树莓派显示与分析、云端记录平台的共同开�
 - [任务与发布记录](docs/团队协作.md)
 - [初始版本与验证边界](docs/初始版本说明.md)
 - [Windows 免安装电脑端：使用与构建](心电云端平台/deploy/desktop/README.md)
+- [QRS/RR、HRV 公开数据评估报告](docs/algorithm-validation/report.html)（下载后用浏览器打开；[数值结果](docs/algorithm-validation/report.json)）
 
 | 目录 | 内容 | 入口 |
 | --- | --- | --- |
