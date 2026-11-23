@@ -36,13 +36,14 @@ def build(output: Path) -> tuple[Path, str]:
         subprocess.run([
             str(compiler), '/nologo', '/target:winexe', '/platform:anycpu',
             '/optimize+', '/utf8output', '/codepage:65001',
-            '/reference:System.Windows.Forms.dll', '/win32icon:' + str(icon),
-            '/out:' + str(executable), str(source / 'Launcher.cs'),
+            '/reference:System.Windows.Forms.dll', '/reference:System.Drawing.dll', '/reference:System.Net.Http.dll',
+            '/win32icon:' + str(icon), '/out:' + str(executable), str(source / 'Launcher.cs'), str(source / 'LauncherCore.cs'),
         ], check=True)
         contents = {
             '心电工作台.exe': executable.read_bytes(),
             '使用说明.txt': ('\ufeff' + (source / '使用说明.txt').read_text(encoding='utf-8')).replace('\r\n', '\n').replace('\n', '\r\n').encode('utf-8'),
             '浏览器备用入口.url': b'[InternetShortcut]\r\nURL=https://62.234.150.104/\r\n',
+            '连接与快捷方式.cmd': ('@echo off\r\nchcp 65001 >nul\r\nstart "" "%~dp0心电工作台.exe" --connection\r\n').encode('utf-8'),
         }
     manifest = ''.join(f'{hashlib.sha256(body).hexdigest()}  {name}\n'
                        for name, body in sorted(contents.items()))

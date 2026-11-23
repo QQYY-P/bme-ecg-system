@@ -11,11 +11,13 @@
   <link rel="stylesheet" href="/assets/workspace.css">
   <link rel="stylesheet" href="/assets/measurement.css">
   <link rel="stylesheet" href="/assets/pwa.css">
+  <link rel="stylesheet" href="/assets/desktop.css">
   <script src="/assets/measurement.js" defer></script>
   <script src="/assets/devices.js" defer></script>
   <script src="/assets/app.js" defer></script>
   <script src="/assets/workspace.js" defer></script>
   <script src="/assets/pwa.js" defer></script>
+  <script src="/assets/desktop.js" defer></script>
 </head>
 <body>
   <div class="app-access"><div><img src="/assets/icons/icon-192.png" width="32" height="32" alt=""><span id="pwa-context">把心电记录放到手机桌面</span></div><button id="pwa-install" class="button secondary" type="button">安装到手机</button></div>
@@ -54,14 +56,17 @@
         <div id="content" hidden>
           <div class="record-tools"><p id="record-note" class="muted"></p><div><button id="edit-record" class="button secondary">名称与备注</button><button id="trash-record" class="button secondary">移入回收站</button></div></div>
           <div class="record-header"><div><div class="record-title"><h2 id="record-name">采集会话</h2><span id="source" class="pill"></span><span id="provenance-kind" class="pill neutral"></span></div><p id="record-id" class="record-id"></p></div><button id="download" class="button secondary">↓ 下载完整 CSV</button></div>
-          <div class="stats"><div class="stat panel"><span>已接收采样点</span><strong id="samples">—</strong><small id="chunks">—</small></div><div class="stat panel"><span>记录时长</span><strong id="duration">—</strong><small>按采样点数计算</small></div><div class="stat panel"><span>采样率</span><strong>360 <em>Hz</em></strong><small>单通道原始心电</small></div><div class="stat panel"><span>有效采样占比</span><strong id="valid">—</strong><small>依据 ADC 范围及记录标记</small></div></div>
+          <nav id="desktop-record-nav" class="desktop-record-nav" aria-label="记录内导航"><button id="desktop-summary" type="button">测量概览</button><button id="desktop-wave" type="button">原始波形</button><button id="desktop-analysis" type="button">云端分析</button><span>/ 搜索记录 · F 专注波形</span></nav>
+          <div id="desktop-overview" class="stats"><div class="stat panel"><span>已接收采样点</span><strong id="samples">—</strong><small id="chunks">—</small></div><div class="stat panel"><span>记录时长</span><strong id="duration">—</strong><small>按采样点数计算</small></div><div class="stat panel"><span>采样率</span><strong>360 <em>Hz</em></strong><small>单通道原始心电</small></div><div class="stat panel"><span>有效采样占比</span><strong id="valid">—</strong><small>依据 ADC 范围及记录标记</small></div></div>
           <section id="measurement-panel" class="panel measurement-panel" hidden aria-labelledby="measurement-title">
             <h2 id="measurement-title">本次测量总结</h2><p id="measurement-state" class="measurement-state" role="status"></p>
             <dl class="measurement-grid"><div><dt>测量时长</dt><dd id="measurement-plan"></dd></div><div><dt>有效 RR 心率（终端）</dt><dd id="measurement-heart"></dd></div><div><dt>实采质量统计（终端）</dt><dd id="measurement-quality"></dd></div><div><dt>已保存分类（终端）</dt><dd id="measurement-class"></dd></div></dl>
             <p id="measurement-next" class="measurement-next"></p><p class="measurement-caption">采样时长不包含断流等待时间。质量通过时间逐点累计，心率按有效实采 RR 间期加权。有效采样比例不等同可分析比例；N 类不代表临床正常，分类用于课程研究。</p>
           </section>
-          <div id="wave-panel" class="wave-panel"><div class="wave-heading"><div><span class="wave-dot"></span><strong>原始波形</strong><span id="wave-origin" class="wave-note"></span></div><div class="wave-controls"><label for="window">窗口</label><select id="window"><option value="10">10 秒</option><option value="30">30 秒</option><option value="60">60 秒</option></select><button id="follow" class="follow active" aria-pressed="true">跟随最新</button></div></div><div class="chart-wrap"><canvas id="chart" aria-label="原始ADC波形，横轴为接收采样序号对应秒数，模型R点可在下方心搏明细中定位" role="img"></canvas><div id="chart-empty" hidden>该范围暂无数据</div></div><div id="marker-legend" class="marker-legend" hidden><label><input id="show-markers" type="checkbox" checked> 显示模型 R 点</label><span class="legend-N">● N</span><span class="legend-S">● S</span><span class="legend-V">● V</span><span id="marker-count"></span></div><div class="wave-footer"><span>纵轴：ADC 原始值</span><span>无效点与段边界断开显示 · 标记不改变原始数据</span></div></div>
+          <div id="wave-workspace">
+          <div id="wave-panel" class="wave-panel"><div class="wave-heading"><div><span class="wave-dot"></span><strong>原始波形</strong><span id="wave-origin" class="wave-note"></span></div><div class="wave-controls"><label for="window">窗口</label><select id="window"><option value="10">10 秒</option><option value="30">30 秒</option><option value="60">60 秒</option></select><button id="follow" class="follow active" aria-pressed="true">跟随最新</button><button id="desktop-focus" type="button" class="desktop-focus" aria-pressed="false">专注查看 · F</button></div></div><div class="chart-wrap"><canvas id="chart" aria-label="原始ADC波形，横轴为接收采样序号对应秒数，模型R点可在下方心搏明细中定位" role="img"></canvas><div id="chart-empty" hidden>该范围暂无数据</div></div><div id="marker-legend" class="marker-legend" hidden><label><input id="show-markers" type="checkbox" checked> 显示模型 R 点</label><span class="legend-N">● N</span><span class="legend-S">● S</span><span class="legend-V">● V</span><span id="marker-count"></span></div><div class="wave-footer"><span>纵轴：ADC 原始值</span><span>无效点与段边界断开显示 · 标记不改变原始数据</span></div></div>
           <div class="history panel"><label for="position">历史位置</label><input id="position" type="range" min="0" max="1" value="1" step="1" aria-label="历史波形结束位置"><span id="position-label">—</span></div>
+          </div>
           <div class="bottom-grid">
             <section class="panel delivery">
               <div class="panel-heading"><h2>上传与存储</h2><span id="upload-status" class="pill"></span></div>
@@ -109,5 +114,6 @@
   <dialog id="admin-dialog" class="admin-dialog"><div class="panel-heading"><h2>账号管理</h2><button class="button secondary" onclick="this.closest('dialog').close()">关闭</button></div><p>每个账号仅查看分配给自己的记录。旧记录需明确指定归属。</p><div id="user-list"></div><form id="new-user-form"><label for="new-username">新账号（3–32 位字母、数字、横线或下划线）</label><input id="new-username" required maxlength="32" autocomplete="off" autocapitalize="none"><label for="new-password">初始密码（至少 10 个字符）</label><input id="new-password" type="password" required minlength="10" maxlength="128" autocomplete="new-password"><button type="submit" class="button primary">创建普通账号</button></form><p id="admin-error" class="form-error" role="alert"></p><h2>待分配记录</h2><div id="unassigned-list"></div></dialog>
   <dialog id="credentials"><form method="dialog"><h2>访问设置</h2><p>本机访问无需填写。连接已设置凭证的服务时，在此输入。</p><label for="token">访问凭证</label><input id="token" type="password" autocomplete="off"><div class="dialog-actions"><button class="button secondary" value="cancel">取消</button><button id="save-token" class="button primary" value="save">保存</button></div></form></dialog>
   <dialog id="password-dialog"><form id="password-form"><h2 id="password-title">修改密码</h2><p>密码修改后，该账号的原有登录全部失效，采集记录保留。</p><div id="current-password-field"><label for="current-password">旧密码</label><input id="current-password" type="password" maxlength="128" autocomplete="current-password" required></div><label for="replacement-password">新密码（10–128 个字符）</label><input id="replacement-password" type="password" minlength="10" maxlength="128" autocomplete="new-password" required><label for="confirm-password">再次输入新密码</label><input id="confirm-password" type="password" minlength="10" maxlength="128" autocomplete="new-password" required><p id="password-error" class="form-error" role="alert"></p><div class="dialog-actions"><button type="button" class="button secondary" onclick="this.closest('dialog').close();document.getElementById('password-form').reset()">取消</button><button id="password-submit" type="submit" class="button primary">确认修改</button></div></form></dialog>
+  <dialog id="desktop-wave-dialog" aria-label="原始波形专注查看"></dialog>
 </body>
 </html>

@@ -17,6 +17,7 @@ MEMBERS = (
     'web/manifest.webmanifest', 'web/sw.js', 'web/offline.html', 'web/pwa.js', 'web/pwa.css',
     'web/icons/icon-192.png', 'web/icons/icon-512.png', 'web/icons/icon-maskable.png', 'web/icons/apple-touch-icon.png',
     'web/index.html', 'web/app.js', 'web/style.css', 'web/workspace.js', 'web/workspace.css',
+    'web/desktop.js', 'web/desktop.css',
     'deploy/prepare_public.py', 'deploy/linux/手机公网访问说明.txt',
     'deploy/linux/install.sh', 'deploy/linux/start.sh',
     'deploy/linux/ecg-cloud.service', 'deploy/linux/部署说明.txt',
