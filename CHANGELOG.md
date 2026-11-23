@@ -33,6 +33,12 @@
 
 关联：[PR #10](https://github.com/XiongBoT/bme-ecg-system/pull/10) · [构建与使用](心电云端平台/deploy/desktop/README.md)。
 
+## 2026-11-23 · 文档导航与目录整理
+
+- **新增：** 根文档导航，以及 STM32、树莓派和云端三个模块入口；使用说明归入模块 `docs/`，历史资料归入 `docs/archive/`。
+- **修复：** 与手机应用合并后的 README 冲突，以及迁移后手机端说明的相对链接。
+- **状态：** [PR #12](https://github.com/XiongBoT/bme-ecg-system/pull/12) 已合并；运行代码保持不变，没有生成新应用版本或执行部署。入口见 [文档导航](docs/README.md)。
+
 ## 2026-11-23 · Android 1.0.0 preview.1
 
 发布标签：`android-v1.0.0-preview.1`；APK 内部版本为 1.0.0（1）。这是预发布，源码已合并。
