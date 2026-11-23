@@ -8,6 +8,7 @@
 - [安装、运行、模型开关与研究复跑](README.txt) — 保留完整操作步骤；其中标注日期的实测内容属于对应阶段。
 - [当前进度及部署验证](docs/云端工作台迭代.md) — 功能、版本、备份与待验收项的统一入口。
 - [Windows 客户端构建](deploy/desktop/README.md)、[Linux 部署](deploy/linux/部署说明.txt)、[手机 HTTPS 访问](deploy/linux/手机公网访问说明.txt)
+- [Android 试用版下载与验收边界](../docs/手机端与安卓安装包.md)、[Android 工程与构建](android/README.md)
 - 历史流程复现：[2026-10-29 笔记本中转](docs/自动连接说明.txt)、[2026-10-28 开发板演示](docs/开发板上传演示说明.txt)。新账号登录使用根 README 的 HTTPS 入口。
 
 ## 目录与职责
@@ -17,6 +18,7 @@
 | [server.py](server.py)、[run_server.py](run_server.py) | 服务端与启动入口 |
 | `*_store.py`、[device_routes.py](device_routes.py)、[analysis_tasks.py](analysis_tasks.py) | 账号、设备、记录与持久分析任务 |
 | [web/](web/) | 手机/电脑网页、PWA、波形与操作界面 |
+| [android/](android/README.md) | Android 试用客户端、资源与构建工具 |
 | [cloud_model/](cloud_model/) | 云端模型适配器及固定版本依赖；[来源](cloud_model/SOURCE.json) |
 | [research/](research/) | 离线 QRS/RR、HRV 评估，不进入生产部署包 |
 | [deploy/](deploy/) | 云端、Windows 打包和升级工具 |

@@ -27,10 +27,10 @@ function stepBeat(direction){
 }
 $('beat-previous').onclick=()=>stepBeat(-1);$('beat-next').onclick=()=>stepBeat(1);
 $('filters-toggle').onclick=()=>{
-  const expanded=$('filters').hidden;$('filters').hidden=!expanded;
-  $('filters-toggle').setAttribute('aria-expanded',String(expanded));
+  $('filter-panel').open=!$('filter-panel').open;
 };
-$('nav-records').onclick=()=>{$('sessions').scrollIntoView({behavior:'smooth',block:'start'});};
+$('filter-panel').addEventListener('toggle',()=>$('filters-toggle').setAttribute('aria-expanded',String($('filter-panel').open)));
+$('desktop-nav-records').onclick=()=>{$('sessions').scrollIntoView({behavior:'smooth',block:'start'});};
 $('nav-device').onclick=()=>{
   const expanded=document.body.classList.toggle('device-expanded');$('nav-device').setAttribute('aria-expanded',String(expanded));
 };

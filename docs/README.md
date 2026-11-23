@@ -10,6 +10,7 @@
 | 固件、接线、串口与按键 | [STM32 模块导航](../硬件/STM32心电采集/README.md) |
 | 树莓派安装、启动、显示与记录 | [树莓派模块导航](../树莓派心电终端/README.md) |
 | 云端、手机、电脑客户端下载与部署 | [云端模块导航](../心电云端平台/README.md) |
+| Android 试用版下载、构建与验收边界 | [手机端与安卓安装包](手机端与安卓安装包.md) |
 | QRS/RR、HRV 公开数据评估 | [HTML 报告](algorithm-validation/report.html)、[数值 JSON](algorithm-validation/report.json)、[复跑说明](../心电云端平台/README.txt) |
 | 协作、发布与本次目录整理 | [团队协作](团队协作.md) |
 | 最初纳入仓库的源码范围 | [初始版本说明](初始版本说明.md)、[固件基线](firmware-baseline.json) |

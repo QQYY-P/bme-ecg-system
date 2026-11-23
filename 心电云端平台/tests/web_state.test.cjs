@@ -1,14 +1,20 @@
 // Isolated DOM/state regression probes; no browser, records or network access.
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
 function harness() {
-  const elements=new Map();
+  const elements=new Map(); let sequence=0;
+  const document={getElementById:element,querySelectorAll:()=>[],addEventListener(){},
+    createElement:tag=>element(tag+'-'+(++sequence)),activeElement:null,documentElement:{dataset:{}}};
   function element(id) {
-    if(!elements.has(id)) elements.set(id,{textContent:'',hidden:false,value:'10',width:100,
-      classList:{add(){},remove(){},toggle(){}},setAttribute(){},replaceChildren(){},reset(){},close(){},
-      getBoundingClientRect(){return {width:0}},append(){}});
+    if(!elements.has(id)) elements.set(id,{textContent:'',hidden:false,value:'',width:100,dataset:{},attributes:{},children:[],
+      classList:{add(){},remove(){},toggle(){}},setAttribute(k,v){this.attributes[k]=v;},removeAttribute(k){delete this.attributes[k];},
+      replaceChildren(){this.children=[];},reset(){},close(){},focus(){document.activeElement=this;},click(){return this.onclick?.();},
+      getBoundingClientRect(){return {width:0}},append(...children){this.children.push(...children);}});
     return elements.get(id);
   }
-  const context=vm.createContext({document:{getElementById:element,querySelectorAll:()=>[],addEventListener(){}},
+  const media={narrow:{matches:true,addEventListener(n,fn){this.changed=fn;}},standalone:{matches:false,addEventListener(){}}};
+  const window={scrollY:0,scrollTo({top}){this.scrollY=top;},navigator:{standalone:false},addEventListener(){},
+    matchMedia:q=>q.includes('max-width')?media.narrow:media.standalone};
+  const context=vm.createContext({document,window,requestAnimationFrame:fn=>fn(),location:{href:''},
     sessionStorage:{getItem:()=>'',removeItem(){},setItem(){}},ResizeObserver:class{observe(){}},
     URLSearchParams,AbortSignal,console,fetch:async()=>({ok:false}),setTimeout,clearTimeout,setInterval(){}});
   const root=path.join(__dirname,'..','web');
@@ -19,7 +25,8 @@ function harness() {
   vm.runInContext(fs.readFileSync(path.join(root,'app.js'),'utf8'),context);
   const source=fs.readFileSync(path.join(root,'workspace.js'),'utf8');
   vm.runInContext(source.slice(0,source.indexOf('initialize();setInterval')),context);
-  return {context,element,state:vm.runInContext('state',context)};
+  return {context,element,media,document,state:vm.runInContext('state',context),
+    loadMobile(){vm.runInContext(fs.readFileSync(path.join(root,'mobile.js'),'utf8'),context);}};
 }
 test('switching account clears text, device status, forms and pagination before fetch',()=>{
   const h=harness();h.state.user={id:'alice'};
@@ -101,4 +108,79 @@ test('late login failure cannot overwrite a newer account login panel',async()=>
   h.state.epoch++;h.element('login-error').textContent='new account message';
   reject(new Error('old failure'));await pending;
   assert.equal(h.element('login-error').textContent,'new account message');
+});
+
+test('invalid date range retains prior results and makes no request',()=>{
+  const h=harness();let reloaded=0;h.context.reloadList=()=>reloaded++;
+  h.state.filters={q:'previous'};h.state.page=2;
+  h.element('date-from').value='2026-11-23';h.element('date-to').value='2026-11-01';
+  h.element('filters').onsubmit({preventDefault(){}});
+  assert.equal(reloaded,0);assert.equal(h.state.filters.q,'previous');assert.equal(h.state.page,2);
+  assert.equal(h.element('filter-error').hidden,false);
+});
+test('accepted mobile filter collapses the form without clearing the selected condition',()=>{
+  const h=harness();h.loadMobile();let reloads=0;h.context.reloadList=()=>reloads++;
+  h.element('query').value='  resting  ';h.element('trash-filter').value='false';h.element('filter-panel').open=true;
+  h.element('filters').onsubmit({preventDefault(){}});
+  assert.equal(h.state.filters.q,'resting');assert.equal(h.element('filter-panel').open,false);
+  assert.match(h.element('filter-summary').textContent,/1/);assert.equal(reloads,1);
+});
+test('polling mobile records does not fetch waves or navigate to results',async()=>{
+  const h=harness();h.loadMobile();h.state.ready=true;let details=0;
+  h.context.loadWave=h.context.loadAnalysis=async()=>details++;
+  h.context.api=async url=>({json:async()=>url.startsWith('/api/sessions')?{total:1,sessions:[{session_id:'first'}]}:{devices:[]}});
+  await h.context.refresh();
+  assert.equal(h.state.selected,'first');assert.equal(details,0);
+  assert.equal(h.element('workspace-shell').dataset.mobileView,'records');assert.equal(h.element('nav-results').disabled,false);
+  h.element('sessions').children[0].onclick();
+  assert.equal(h.element('workspace-shell').dataset.mobileView,'results');assert.equal(details,2);
+});
+test('account view skips detail polling; returning to results refreshes and preserves record selection',()=>{
+  const h=harness();h.loadMobile();h.state.ready=true;h.state.selected='one';let details=0;
+  h.context.loadWave=h.context.loadAnalysis=()=>details++;
+  h.element('nav-account').onclick();assert.equal(h.context.MobileUI.needsDetail(),false);
+  h.element('nav-results').onclick();assert.equal(h.state.selected,'one');assert.equal(details,2);
+  assert.equal(h.element('nav-results').attributes['aria-current'],'page');
+  assert.equal(h.document.activeElement,h.element('results-heading'));
+});
+test('empty selection cannot open results and disappearance returns mobile to records',()=>{
+  const h=harness();h.loadMobile();h.element('nav-results').onclick();
+  assert.equal(h.element('workspace-shell').dataset.mobileView,'records');
+  h.state.selected='one';h.element('nav-results').onclick();h.context.selectSession(null);
+  assert.equal(h.element('workspace-shell').dataset.mobileView,'records');assert.equal(h.element('nav-results').disabled,true);
+});
+test('account cleanup removes mobile errors and navigation from the previous account',()=>{
+  const h=harness();h.loadMobile();h.element('nav-account').onclick();h.context.detailFeedback('private error',true);
+  h.element('filter-error').textContent='old error';h.context.clearAccount();
+  assert.equal(h.element('workspace-shell').dataset.mobileView,'records');
+  assert.equal(h.element('detail-message').textContent,'');assert.equal(h.element('detail-feedback').hidden,true);
+  assert.equal(h.element('filter-error').textContent,'');assert.equal(h.element('nav-results').disabled,true);
+});
+test('identical list updates retain the actual button and keyboard focus',()=>{
+  const h=harness();h.state.sessions=[{session_id:'one',name:'A'}];h.state.total=1;
+  h.context.renderList();const button=h.element('sessions').children[0];button.focus();
+  h.context.renderList();assert.equal(h.element('sessions').children[0],button);assert.equal(h.document.activeElement,button);
+  h.state.sessions[0].name='B';h.context.renderList();
+  assert.notEqual(h.element('sessions').children[0],button);assert.equal(h.document.activeElement,h.element('sessions').children[0]);
+});
+test('failed wave provides retry and selecting another record resets the disabled retry button',async()=>{
+  const h=harness();h.state.selected='one';h.context.api=async()=>{throw Error('unreachable');};
+  await h.context.loadWave();assert.equal(h.element('detail-retry').hidden,false);assert.match(h.element('detail-message').textContent,/重试/);
+  h.element('detail-retry').disabled=true;h.context.selectSession('two');assert.equal(h.element('detail-retry').disabled,false);
+});
+test('late wave error cannot replace a newer selection loading message',async()=>{
+  const h=harness();let fail;h.state.selected='one';h.context.api=()=>new Promise((resolve,reject)=>fail=reject);
+  const request=h.context.loadWave();h.context.selectSession('two');fail(Error('old error'));await request;
+  assert.equal(h.element('detail-retry').hidden,true);assert.doesNotMatch(h.element('detail-message').textContent,/old error/);
+});
+test('desktop resize restores detail refresh and opens the filter form',()=>{
+  const h=harness();h.loadMobile();h.state.ready=true;h.state.selected='one';let details=0;
+  h.context.loadWave=h.context.loadAnalysis=()=>details++;
+  h.media.narrow.matches=false;h.media.narrow.changed();
+  assert.equal(h.context.MobileUI.needsDetail(),true);assert.equal(details,2);assert.equal(h.element('filter-panel').open,true);
+});
+test('Android export passes only record and user identity to the system save flow',async()=>{
+  const h=harness();h.document.documentElement.dataset.nativeApp='android';h.state.selected='session_1';h.state.user={id:'a'.repeat(32)};
+  let called=false;h.context.api=()=>{called=true;};await h.element('download').onclick();
+  assert.equal(called,false);assert.equal(h.context.location.href,'ecg-export://download/session_1?user='+'a'.repeat(32));
 });
