@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+data/
+demo_data/
+upload_state/
+*.log
+.env
+.test_runs/
+logs/
+.cloud_private/
+deploy/dist/
+historical_sources/
+cloud_sources/

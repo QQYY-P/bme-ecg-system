@@ -1,0 +1,45 @@
+360 Hz ADC 与 USART1 DMA 采集程序
+
+硬件前提：STM32F103C8T6，8 MHz 外部晶振。系统时钟 72 MHz，ADC 时钟 12 MHz。
+PA0 接 AD8232 OUTPUT；PB0/PB1 接 LO+/LO-；PB10 接 SDN。
+PA9 接 3.3 V USB 转串口模块 RXD，GND 共地。PA10 接模块 TXD（本程序不接收，可不接）。
+
+上位机：115200，8 数据位，无校验，1 停止位，无流控，文本接收。
+每行一个十进制 ADC 数值（0..4095），CRLF 结尾。导联脱落输出 -1。
+每 100 ms 一包 36 行，标称每秒 360 行。没有启动文字或 printf 混入数据流。
+采用保守的整包无效标记：主循环在某个采集区间观察到任一 LO 引脚为高，
+对应取出的整包 36 点标为 -1；恢复边界可能多标一包。
+这是主循环轮询，不提供逐采样点的导联状态时间戳，无法捕获两次轮询间的极短脉冲。
+上位机应把 -1 当作缺失值，不能将其当作 ADC 电压。
+仅在没有丢包时，时间轴可用接收序号 / 360。当前文本协议不包含序号和丢包通知。
+
+启动顺序：HAL、时钟、GPIO、DMA、USART1、ADC1、TIM3 初始化；
+ADC 校准 -> ADC 循环 DMA（72 个半字）-> TIM3 启动。
+ADC 中断只增加半区完成计数。主循环复制稳定半区，打包至独立发送队列。
+发送队列 4 包（包括正在发送的一包），串口忙时保留待发包。
+队列满时丢弃新包并增加 uart_dropped_blocks，不覆盖正在发送的数据。
+ADC 半区被覆盖前未取走时，增加 adc_dropped_blocks，放弃过期数据。
+不要在连续采集时设置断点：DMA/定时器可能继续运行，会破坏连续性。
+不要同时使用 printf 或其他代码占用 huart1。
+
+Keil Watch 变量：
+app_stage：1 HAL，2 外部时钟，3 GPIO/DMA，4 UART，5 ADC/TIM，
+           6 ADC 校准，7 ADC DMA 启动，8 TIM3 启动，9 主循环。
+app_error：0 正常；1 校准失败；2 ADC DMA 启动失败；3 TIM 启动失败；
+           4 ADC 错误；5 UART 错误；6 UART DMA 启动失败；7 发送超过 1 秒；
+           100 + app_stage 表示对应阶段初始化失败。
+adc_blocks：正常约每秒增加 10。
+uart_sent_blocks：正常约每秒增加 10，可能短暂落后于 adc_blocks。
+adc_dropped_blocks、uart_dropped_blocks：正常均应为 0。
+lead_off：任一 LO 引脚为高时为 1。
+uart_test_status：最近一次启动 UART DMA 的 HAL 返回值，初始为 HAL_ERROR。
+HAL_OK 仅表示 DMA 启动成功；uart_sent_blocks 增长才表示完成回调发生。
+
+故障定位：
+app_stage 停在 2：检查 8 MHz 外部晶振，不能仅凭编译通过判断起振成功。
+app_stage 为 9 但 adc_blocks 不增长：检查 ADC DMA/TIM3 运行状态。
+adc_blocks 增长但 uart_sent_blocks 不增长：检查 DMA1_Channel4 与 USART1 中断。
+两者均增长但电脑无数据：检查是否烧录了本次固件、PA9 接线、共地和 COM 口。
+收到持续 -1：串口链路正常，导联检测为脱落状态，请检查 LO 信号。
+
+验证范围：本机 Keil ARM Compiler 5 编译链接通过不等于开发板实测通过。

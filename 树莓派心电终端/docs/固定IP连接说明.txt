@@ -1,0 +1,51 @@
+树莓派固定 IP 与 VS Code 连接
+验证日期：2026-10-27
+
+适用连接方式：树莓派通过网线直接连接当前笔记本。
+
+树莓派有线 IP：192.168.137.59
+子网前缀：24（255.255.255.0）
+笔记本以太网 IP / 树莓派网关：192.168.137.1
+树莓派 DNS：192.168.137.1
+登录用户名：pi2
+VS Code Remote-SSH 主机名称：raspberrypi2
+
+日常使用
+1. 给树莓派供电，将网线连接树莓派与笔记本。
+2. 等待树莓派启动完成。
+3. 使用 E:\tool\VSCode-RaspberryPi2\Code.exe，连接 raspberrypi2。
+4. 提示密码时输入树莓派账户密码。
+无需每次执行 ip addr 命令。固定 IP 不等于免密码登录。
+
+笔记本 SSH 配置已核对，位于 C:\Users\16236\.ssh\config：
+Host raspberrypi2
+    HostName 192.168.137.59
+    User pi2
+    Port 22
+
+持久配置
+修改现有 NetworkManager 有线连接 netplan-eth0，UUID：
+75a1216a-9d1a-30cd-8aca-ace5526ec021
+IPv4 已改为 manual，自动连接已启用，自动连接优先级为 100。
+通过该设备的 Netplan 集成写入：
+/etc/netplan/90-NM-75a1216a-9d1a-30cd-8aca-ace5526ec021.yaml
+SSH 服务与 NetworkManager 服务均已设为开机启动。
+
+原配置备份
+/home/pi2/ecg-network-backup-20261027-w6W3U6/eth0-before.yaml
+同一目录保留修改前后有线配置摘要及重启前启动标识。
+旧配置依赖 DHCP；当前环境曾无法取得租约，不能把恢复旧配置视为连接必定恢复。
+
+验证结果
+已实际安全重启树莓派。重启后，无需手工补设地址，eth0 自动连接到 netplan-eth0，
+保持 192.168.137.59/24；从笔记本重新通过 SSH 登录成功，项目 app.py 可访问。
+SSH 服务重启后为 enabled / active。
+
+使用边界
+此配置适用于当前笔记本 192.168.137.1/24 的网线直连网络。
+以后如果改接路由器或换网段，应相应调整树莓派配置。
+本地 SSH 连接不需要树莓派能访问互联网；通过笔记本上网仍需要 Windows 网络共享正常。
+
+配置参考
+https://netplan.readthedocs.io/en/stable/netplan-everywhere/
+https://networkmanager.dev/docs/api/latest/nmcli.html

@@ -1,0 +1,10 @@
+.measurement-panel{margin:0 0 18px;padding:20px}
+.measurement-panel h2{margin:0 0 10px}
+.measurement-state{font-size:16px;font-weight:600;color:var(--text);line-height:1.6}
+.measurement-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin:16px 0;padding:0}
+.measurement-grid>div{display:block;min-width:0;margin:0;font-size:14px}
+.measurement-grid dt{font-size:12px;color:var(--muted);margin-bottom:5px}
+.measurement-grid dd{margin:0;text-align:left;line-height:1.65;overflow-wrap:anywhere}
+.measurement-next{padding:12px;border-radius:10px;background:rgba(119,231,194,.07);line-height:1.7}
+.measurement-caption{font-size:12px;color:var(--muted);line-height:1.7}
+@media(max-width:600px){.measurement-panel{padding:16px}.measurement-grid{grid-template-columns:1fr;gap:14px}}

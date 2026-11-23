@@ -1,0 +1,8 @@
+.app-access{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px max(5%,env(safe-area-inset-left));background:#e6f3ef;border-bottom:1px solid #cee6dd;color:#24675d;font-size:12px}
+.app-access>div{display:flex;align-items:center;gap:10px;min-width:0}.app-access img{height:32px;width:32px;border-radius:9px}.app-access span{line-height:1.5}.app-access .button{flex-shrink:0;min-height:40px}
+.app-message{padding:12px 5%;font-size:13px;line-height:1.7;background:#fff2dc;color:#76591e}.app-update{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#e6f3ef;color:#24675d}
+#pwa-help{width:min(440px,calc(100vw - 28px));max-height:calc(100dvh - 32px);padding:26px;overflow:auto;border:1px solid #dbe6e2;border-radius:16px;color:#192b39}#pwa-help::backdrop{background:#112d385e}#pwa-help h2{font-size:22px;margin:10px 0 14px}#pwa-help p{line-height:1.85;font-size:14px;overflow-wrap:anywhere}#pwa-help .pwa-hint{font-size:12px;color:#74828c}#pwa-help img{width:56px;height:56px;border-radius:14px}#pwa-help .dialog-actions{flex-wrap:wrap}
+body{padding-bottom:env(safe-area-inset-bottom)}
+.login-shell{min-height:calc(100vh - 62px);min-height:calc(100dvh - 62px)}
+@media(display-mode:standalone){.topbar{padding-top:env(safe-area-inset-top)}.app-access{padding-top:max(10px,env(safe-area-inset-top))}}
+@media(max-width:400px){.app-access{padding:8px 12px;gap:8px}.app-access .button{font-size:12px;padding:9px 10px}.app-access img{width:28px;height:28px}#pwa-help{padding:22px}.app-update{align-items:flex-start;flex-direction:column}}

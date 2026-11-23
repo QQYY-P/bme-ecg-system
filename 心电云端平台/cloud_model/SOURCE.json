@@ -1,0 +1,90 @@
+{
+  "source_directory": "D:\\课程\\1.生物医学工程综合\\树莓派心电终端",
+  "model": "CardioEdgeAI v1 INT8",
+  "upstream_commit": "ec36bbc5f96ea42a93274c499a51e3678742ffcf",
+  "weights_sha256": "1398ea833ff65c90d63ed3174722c9280fa6606ab2c165bfa7c53ca8fe264a41",
+  "adaptation": "Only imports changed to package-relative imports; model algorithm and weights unchanged.",
+  "files": [
+    {
+      "path": "contracts.py",
+      "source_sha256": "575116352c7aa6a08cdb4f8853d7e44e470dbb93a8d10585d54069c3eca74776",
+      "cloud_sha256": "575116352c7aa6a08cdb4f8853d7e44e470dbb93a8d10585d54069c3eca74776",
+      "changes": {}
+    },
+    {
+      "path": "preprocessing.py",
+      "source_sha256": "051c03d044faff2d747b62bcaff068024fc1a78cf6f6673c93adfc15ace87b5b",
+      "cloud_sha256": "45cca0a312db207aa5fe9c4a53be294774adf78bc288cbe7630ebc94f4f77a9d",
+      "changes": {
+        "from notch_filter import": "from .notch_filter import"
+      }
+    },
+    {
+      "path": "notch_filter.py",
+      "source_sha256": "9583a0143b54274fe5019c3abd88ecaf228e5556746f550f6be77c8c3c60f67f",
+      "cloud_sha256": "9583a0143b54274fe5019c3abd88ecaf228e5556746f550f6be77c8c3c60f67f",
+      "changes": {}
+    },
+    {
+      "path": "rpeak_detector.py",
+      "source_sha256": "ddd27fc4166fee025267f838d2d1ac5055f39d87362fd9d8692549a168e37840",
+      "cloud_sha256": "2964e729081712f721d73339c4837d53fc5c8ad0b429d69e0b9d6f6fa0a37f80",
+      "changes": {
+        "from notch_filter import": "from .notch_filter import"
+      }
+    },
+    {
+      "path": "signal_quality.py",
+      "source_sha256": "3d3a308b0273430da34b294e028b54ccb6441f102cd3f4eb42a365a6e39253da",
+      "cloud_sha256": "3d3a308b0273430da34b294e028b54ccb6441f102cd3f4eb42a365a6e39253da",
+      "changes": {}
+    },
+    {
+      "path": "cardioedge/__init__.py",
+      "source_sha256": "898d5e5a82d8b3225cfe42309c945f57782c7115eba6162143e920810e0929d5",
+      "cloud_sha256": "898d5e5a82d8b3225cfe42309c945f57782c7115eba6162143e920810e0929d5",
+      "changes": {}
+    },
+    {
+      "path": "cardioedge/stream.py",
+      "source_sha256": "b5a7f83e4af9e41a2d782e5ba471147ac5b8a67f39ac8457eef6f8e9b20f396e",
+      "cloud_sha256": "e320c6d170b9dc499a7975232e419a252ffed24b20eaac9b8668b0af0ea09683",
+      "changes": {
+        "from contracts import": "from ..contracts import",
+        "from preprocessing import": "from ..preprocessing import",
+        "from rpeak_detector import": "from ..rpeak_detector import",
+        "from signal_quality import": "from ..signal_quality import"
+      }
+    },
+    {
+      "path": "cardioedge/numpy_candidate.py",
+      "source_sha256": "c2d1a3482d806ee84e8e81b7e02f85948151fb3ea43b2dbf6a9bfb5dcf1cd896",
+      "cloud_sha256": "c2d1a3482d806ee84e8e81b7e02f85948151fb3ea43b2dbf6a9bfb5dcf1cd896",
+      "changes": {}
+    },
+    {
+      "path": "cardioedge/portable_weights.npz",
+      "source_sha256": "1398ea833ff65c90d63ed3174722c9280fa6606ab2c165bfa7c53ca8fe264a41",
+      "cloud_sha256": "1398ea833ff65c90d63ed3174722c9280fa6606ab2c165bfa7c53ca8fe264a41",
+      "changes": {}
+    },
+    {
+      "path": "cardioedge/LICENSE.txt",
+      "source_sha256": "6313884555ed637fbb0908099b43bbe5dd250bbc19c57a0f1df22803160ba183",
+      "cloud_sha256": "6313884555ed637fbb0908099b43bbe5dd250bbc19c57a0f1df22803160ba183",
+      "changes": {}
+    },
+    {
+      "path": "cardioedge/LICENSE-LiteRT.txt",
+      "source_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "cloud_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "changes": {}
+    },
+    {
+      "path": "cardioedge/THIRD_PARTY_NOTICES.txt",
+      "source_sha256": "e36ab7b80787f3c9b6551a15bf64340a5a39909200cba6a1e0fd824057656fcf",
+      "cloud_sha256": "e36ab7b80787f3c9b6551a15bf64340a5a39909200cba6a1e0fd824057656fcf",
+      "changes": {}
+    }
+  ]
+}

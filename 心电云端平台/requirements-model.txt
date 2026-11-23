@@ -1,0 +1,3 @@
+# Optional only when ECG_MODEL=cardioedge; no PyTorch/TensorFlow runtime.
+numpy==2.2.6
+scipy==1.15.3

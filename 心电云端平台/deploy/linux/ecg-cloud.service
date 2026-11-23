@@ -1,0 +1,17 @@
+[Unit]
+Description=ECG course upload, storage and web service (no model)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/ecg-cloud
+Environment=ECG_DEPLOYMENT=cloud
+ExecStart=/usr/bin/bash %h/ecg-cloud/deploy/linux/start.sh
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=20
+UMask=0077
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target

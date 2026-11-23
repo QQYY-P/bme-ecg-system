@@ -1,0 +1,67 @@
+STM32 → 树莓派心电串口对接说明
+更新：2026-10-27，七字节协议版
+
+1. 硬件与参数
+STM32 PA9（USART1 TX）→ USB-TTL RX；STM32 GND → USB-TTL GND；USB 插头接树莓派。
+使用3.3V TTL，维持STM32原有供电，不需要连接转接器TX或VCC。
+AD8232 OUT→PA0，LO+→PB0，LO−→PB1，SDN→PB10；PB12/PB13跟随LO状态。
+串口115200、8N1、无流控。主程序TIM3触发ADC，设计采样率360Hz。
+每100ms入队36点，每块252字节。串口读取可拆分或合并帧，不等于DMA块边界。
+
+2. 每点7字节（不再自动兼容旧3字节固件）
+AA 55 MODE SEQ DATA_H DATA_L SUM
+AA 55：固定帧头。
+MODE：00真实ADC，01 STM32软件模拟。
+SEQ：8位序号，0～255循环，模式切换不清零。
+DATA_H/DATA_L：大端ADC值，0～4095或无效标记FFFF。
+SUM：(MODE + SEQ + DATA_H + DATA_L) & 0xFF，不包含AA55。
+例：AA 55 00 05 08 00 0D（实采，序号5，ADC2048）。
+例：AA 55 01 05 08 00 0E（模拟，序号5，ADC2048）。
+例：AA 55 01 FF FF FF FE（模拟，序号255，无效）。
+采集固件不混入ASCII、逗号、换行；独立递增串口测试不代表360Hz心电采集。
+
+3. 模式与界面
+上电默认真实ADC。PC13/SW2高电平按下，30ms消抖，短按一次切换真实/模拟。
+模式在完整块边界生效；旧队列块保留旧MODE。切换时新模式先发36点FFFF隔离块。
+模拟表300点/周期，在360Hz下约72次/分，不受导联输入屏蔽。
+界面读取MODE显示“实采”或“板端模拟”；首次未收到有效帧时保持未知。
+收到模式切换、坏帧重同步、序号异常、无效值或超时，重新积累滤波与心率上下文。
+FFFF仍是共享无效标记，不能单凭FFFF判定具体故障；MODE独立表示来源。
+实采预处理详见 docs/实采预处理说明.txt。板端模拟与本地演示不启用该显示预处理。
+
+4. 启动与诊断
+列出端口：python3 app.py --list-ports
+在树莓派连接的屏幕上启动：sh ~/ecg-screen.sh --port auto
+auto仅选择唯一USB串口；也可明确指定 /dev/serial/by-id/... 或 /dev/ttyUSB0。
+板载ttyAMA0不会被自动当作USB-TTL。不要加 --demo 接收STM32，--demo是Pi本地生成。
+接收器搜索AA55，等待完整7字节后检查MODE、ADC和SUM；任意起始SEQ均可对齐。
+损坏候选按字节丢弃后继续搜索，原始接收字节照常保存，坏帧不会作为有效采样绘制。
+约3秒无数据/未对齐会给出提示；数据中断超过2秒会丢弃旧残帧并重置上下文。
+旧三字节固件需要先更新STM32；不会自动退回没有模式与校验的旧解析方式。
+停止时点击“停止”并等待保存完成，再Alt+F4退出。暂停显示仍会接收并保存。
+
+5. 记录与兼容
+新原始采样块为v2，逐点记录mode（0/1/未知），CSV追加mode和signal_origin。
+serial+mode0→real_adc，serial+mode1→board_simulated，demo→local_simulated。
+旧v1记录及无mode列的旧CSV仍可读取、导出和回放；未知来源不补写为真实采集。
+回放保留mode，但来源仍标回放；不据此断言历史数据一定来自实体板。
+quality.json v3分别统计有效/无效、模式、模式变化、重同步及序号异常。
+滤波仅用于显示/心率分析；原始ADC、原始串口字节、原始电压CSV不被覆盖。
+
+6. 验证边界
+旧三字节版本曾实物接收3484点，逐点匹配板端模拟表；用户确认HDMI动态波形可见。
+该历史结果在 evidence/15_stm32_live_20261027，不代替新七字节版本的验证。
+新协议软件测试覆盖碎片帧、校验失败、逐字节恢复、模式切换、记录与旧数据兼容。
+新协议的本次运行证据保存在 evidence/16_protocol_v2_20261027 及对应发布检查目录。
+8位序号不能检测全部丢失情况，SUM8存在校验碰撞；不宣称绝对零丢包或检出所有错误。
+真实心电模块、长期连续采集和实际固件版本仍以实物核对结果为准。
+
+7. 来源追踪
+STM32工程：D:/project/BME_work/hardware/My_Hardware_Code
+协议：Doc/2026-10-27_七字节串口协议.txt
+编码：User/Src/usart.c 的 UART_EncodeSampleFrame
+来源切换、无效隔离块和DMA：APP/Src/heart.c 的 CollectBlock
+usart.c SHA256：ea178f46e4de9f192fbb995853b054cea42eedb308eeffe1e05b20f2c3191fc8
+heart.c SHA256：467538621a124713428c6bad1cd9895a45abfe57f031bdb73f69bf58b126b16c
+工程HEX SHA256：4bb8b599d5c7e8bafb3e9f759478a765773b93e66f19e9387057104598a61dc0
+上述文件摘要表示本次对照的本地文件，不单独证明实体板完整固件版本。

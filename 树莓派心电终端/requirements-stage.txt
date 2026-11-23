@@ -1,0 +1,6 @@
+# Optional capture and offline audit tools, in addition to the existing runtime.
+# Pi OS alternative: python3-pil.imagetk python3-matplotlib xvfb xauth
+# See the stage handoff README for the tested runtime versions.
+-r requirements-pi.txt
+Pillow>=10,<13
+matplotlib>=3.7,<4

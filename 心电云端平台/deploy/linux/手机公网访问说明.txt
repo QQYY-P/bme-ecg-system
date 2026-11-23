@@ -1,0 +1,84 @@
+手机访问与账号隔离部署说明（2026-11-23）
+
+状态：2026-11-23已在真实服务器开通 https://62.234.150.104/ ，双账号隔离、证书与续期测试通过。
+实际版本、备份、凭据位置和验收结果见项目根目录“云端工作台迭代.md”；下文保留完整部署流程。
+无域名方案：手机浏览器 → 公网 IPv4 的 HTTPS/Nginx → 本机 127.0.0.1:8766 心电服务。
+保留已有树莓派—笔记本—云端的 SSH 数据通道，8766 端口不对公网开放。
+公网入口由服务器运行，不依赖手机或笔记本处理模型；设备上传仍依赖目前的中转链路。
+
+一、准备及迁移
+1. 部署之前备份 ~/ecg-cloud-data（含 cloud.sqlite 与原始数据目录），保留当前应用目录供回退。
+   停服务后用数据库备份或一致文件副本；不要在 SQLite 写入中仅复制一个 cloud.sqlite 文件。
+2. 更新到新包并安装原有 requirements.txt / requirements-model.txt。原始记录不放在程序包里。
+3. 在服务器普通登录用户下运行：
+   cd ~/ecg-cloud
+   .venv/bin/python manage_accounts.py --data-dir ~/ecg-cloud-data create-user admin --admin
+   密码在终端隐藏输入，至少 10 个字符，不要写入命令行或发送给他人。
+   此命令须在开启 ECG_PUBLIC_ACCESS 之前执行；管理账号自己也只能查看分配给自己的波形。
+4. 生成设备凭证（输出文件必须不存在）：
+   .venv/bin/python manage_accounts.py --data-dir ~/ecg-cloud-data device-key --output ~/ecg-device-credentials.json
+   通过已有 SSH 安全通道将它复制为树莓派实际 data/cloud/device-credentials.json，chmod 600。
+   如终端使用自定义 data-dir，放在该目录下 cloud/；亦可用 ECG_DEVICE_TOKEN_FILE 指向它。
+   设备凭证仅留在设备与安全备份中，不填写到手机网页。轮换会使旧设备凭证立即失效。
+   树莓派要同时更新本次客户端；旧客户端无法使用浏览器账号口令上传。
+5. 原先无 owner 的记录继续保留，普通账号看不到；管理员登录后在“账号与待分配记录”中明确分配。
+   不会把历史记录自动归给首个登录人。原始采集时间、数据、模型输入哈希不修改。
+
+二、生成配置（只写本地新目录，不安装）
+   .venv/bin/python deploy/prepare_public.py --ip 实际公网IPv4 --output ~/ecg-public-config
+   输出 bootstrap/https 两份 Nginx 配置、systemd 环境覆盖配置、证书续期 reload hook。
+   先在腾讯云控制台核对实际公网 IP、实例有效期及现有网站；不要覆盖其他网站配置。
+
+三、先启用账号模式，再暴露 HTTPS
+1. 将 public-access.conf 安装为：
+   ~/.config/systemd/user/ecg-cloud.service.d/public-access.conf
+   其中启用 ECG_AUTH_REQUIRED=1、ECG_COOKIE_SECURE=1、ECG_PUBLIC_ACCESS=1、ECG_MODEL=cardioedge。
+   systemctl --user daemon-reload
+   systemctl --user restart ecg-cloud.service
+   公网模式会拒绝缺少管理员、关闭账号认证或关闭 Secure Cookie 的启动。
+2. 本机检查：
+   curl http://127.0.0.1:8766/api/auth/config
+   应返回 enabled:true；无 Cookie 的 /api/sessions 应返回 401。
+   ss -ltn 应看到服务仅监听 127.0.0.1:8766。没有通过这些检查不要发布代理入口。
+3. 管理员安装 Nginx 与 Certbot 5.4 或更新版本，确认现有站点不受影响。
+   公网防火墙仅为此网页放行 TCP 80、443；保留既有 SSH 规则，不放行 8766。
+   创建 /var/www/ecg-acme，将 nginx-bootstrap.conf 作为独立站点安装，nginx -t 后 reload。
+   该阶段仅开放 ACME 验证路径，其他 HTTP 路径返回 404，不提供登录表单。
+
+四、申请可信 IP 证书
+Let's Encrypt 已支持 IP 证书。IP 证书短期有效（约 6 天），必须自动续期。
+先测试申请（测试证书不安装到正式 HTTPS 站点）：
+   sudo certbot certonly --staging --cert-name ecg-ip-staging --preferred-profile shortlived --webroot --webroot-path /var/www/ecg-acme --ip-address 实际公网IPv4
+验证通过后正式申请：
+   sudo certbot certonly --cert-name 实际公网IPv4 --preferred-profile shortlived --webroot --webroot-path /var/www/ecg-acme --ip-address 实际公网IPv4
+按 Certbot 提示填写联系邮箱并由服务器所有者确认服务条款。正式申请不要带 --staging。
+官方说明：https://letsencrypt.org/2026/03/11/shorter-certs-certbot
+将 nginx-https.conf 替换本项目 bootstrap 配置，确认 /etc/letsencrypt/live/实际公网IPv4 下证书存在，nginx -t 后 reload。
+配置会把 HTTP 转到 HTTPS，原始服务继续只监听本机；不要用自签名证书并让手机忽略警告。
+
+五、续期与验收
+1. 将 reload-ecg-nginx.sh 安装到 /etc/letsencrypt/renewal-hooks/deploy/，权限 755。
+2. 确认系统的 certbot.timer、snap.certbot.renew.timer 或本项目 ecg-certbot-renew.timer 已启用，至少每天检查续期。
+   sudo certbot renew --dry-run --run-deploy-hooks
+   检查退出码、续期日志和 Nginx reload；不要只验证第一次签发。不要重复建立另一套定时器。
+3. 手机关闭 Wi-Fi，用移动网络打开 https://实际公网IPv4/，确认没有证书警告。
+   两个普通账号分别验证登录、各自记录、退出；另一用户的编号不能读取波形/下载/任务。
+4. 管理员创建普通账号后，树莓派会自动同步名单。开始采集时确认本次使用者。
+   未分配也可本地采集，上传后需管理员分配，普通账号不会看到。
+5. 验证采集、后台上传与手机查阅同时运行；网页关闭后云端队列继续，重启服务后恢复。
+   验证树莓派离线超过约 35 秒显示终端离线，待机不显示为采集中。
+6. 更新正式用户说明时才填写可用网址；不要将笔记本 localhost 地址当手机公网入口。
+
+回退：先禁用本项目公网 Nginx 站点并停止公开访问，再恢复备份应用/服务配置。
+不要在公网入口保留时关闭账号隔离。旧设备口令与新账号模式不同，回退须同步核对客户端。
+
+六、安装到手机桌面（本轮 PWA 更新后生效）
+- 安卓：使用支持网页安装的浏览器打开正式 HTTPS 网址，点击页面顶部“安装到手机”；出现“安装应用”按钮时点击并按系统提示确认。没有安装弹窗时，可在浏览器菜单选择“安装应用”或“添加到主屏幕”。具体能力依手机和浏览器而异。
+- iPhone：在 Safari 打开正式网址，点击“分享→添加到主屏幕”；如有“作为网页 App 打开”选项，保持开启后点“添加”。从桌面图标“心电记录”进入，沿用原账号；必要时重新登录。
+- 微信等内置浏览器可能不提供安装入口，请从菜单选择在系统浏览器打开。安装由手机用户亲自确认；本项目不提供 APK 或应用商店安装包。
+- 查看记录和分析结果需要联网；断网或服务器不可达时只显示通用连接提示，不离线缓存个人心电记录、CSV、账号接口或工作台 HTML。已有受保护登录 Cookie 沿用浏览器机制，不把设备密钥放进手机应用。
+- 更新显示“有新版本”时，先提交当前输入，再点“更新并刷新”。不自动强制刷新页面；已保存到服务器的记录不受影响。
+- 从桌面移除应用不会删除云端账号和采集记录。共用手机请退出登录；恢复网络后刷新确认当前账号。
+- 发布时必须包含 /manifest.webmanifest、/sw.js（根路径范围）、web/pwa.*、offline.html 和 icons/；继续通过现有443入口，不新增公开端口。
+- 实机验收：安卓和 iPhone 各安装一次→从桌面打开→登录只看到本人记录→退出→关闭网络重开显示连接提示→联网重新连接→新版本主动更新。电脑浏览器测试不能替代手机实机验证。
+依据：MDN Making PWAs installable（https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable）；Apple iPhone 使用手册的“添加到主屏幕”（https://support.apple.com/guide/iphone/bookmark-a-website-iph42ab2f3a7/ios）。

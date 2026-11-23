@@ -1,0 +1,22 @@
+Model weights: CardioEdgeAI
+Copyright (c) 2026 Rejoyan Islam. MIT License; see LICENSE.txt.
+Source: https://github.com/md-rejoyan-islam/CardioEdgeAI
+Pinned commit: ec36bbc5f96ea42a93274c499a51e3678742ffcf
+Original model SHA256: 216ae64abccae28fde39da9cb4ec6c0656d71a37ffa8b3acc21ceaee01ff5389
+
+Numerical reference for this independently written NumPy adapter:
+TensorFlow / LiteRT reference kernels, Copyright The TensorFlow Authors,
+Apache License 2.0; see LICENSE-LiteRT.txt.
+Q31 multiplication and quantized mean semantics follow TensorFlow reference
+algorithms. Per-channel FC rounding follows the LiteRT 2.3.0 reference kernel.
+https://github.com/tensorflow/tensorflow/blob/v2.14.0/tensorflow/lite/kernels/internal/reference/reduce.h
+https://github.com/google-ai-edge/LiteRT/blob/v2.3.0/tflite/kernels/internal/reference/integer_ops/fully_connected.h
+
+This is a model-specific experimental NumPy adapter. It is not an official
+TensorFlow/LiteRT distribution and does not support arbitrary TFLite models.
+
+Validation inputs are derived from the MIT-BIH Arrhythmia Database (PhysioNet):
+https://physionet.org/content/mitdb/1.0.0/
+Data license: Open Data Commons Attribution License v1.0.
+Moody GB, Mark RG. The impact of the MIT-BIH Arrhythmia Database.
+IEEE Engineering in Medicine and Biology Magazine 20(3):45-50, 2001.

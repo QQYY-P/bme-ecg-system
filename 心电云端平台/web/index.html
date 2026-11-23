@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#087f71"><meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="心电记录"><meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="/assets/icons/icon-192.png">
+  <title>心电数据工作台 · 课程演示</title>
+  <link rel="stylesheet" href="/assets/style.css">
+  <link rel="stylesheet" href="/assets/workspace.css">
+  <link rel="stylesheet" href="/assets/measurement.css">
+  <link rel="stylesheet" href="/assets/pwa.css">
+  <script src="/assets/measurement.js" defer></script>
+  <script src="/assets/devices.js" defer></script>
+  <script src="/assets/app.js" defer></script>
+  <script src="/assets/workspace.js" defer></script>
+  <script src="/assets/pwa.js" defer></script>
+</head>
+<body>
+  <div class="app-access"><div><img src="/assets/icons/icon-192.png" width="32" height="32" alt=""><span id="pwa-context">把心电记录放到手机桌面</span></div><button id="pwa-install" class="button secondary" type="button">安装到手机</button></div>
+  <div id="pwa-network" class="app-message" role="status" hidden></div>
+  <div id="pwa-update" class="app-message app-update" role="status" hidden><span>有新版本。刷新会清除尚未提交的输入，已保存记录不受影响。</span><button id="pwa-update-button" class="button secondary" type="button">更新并刷新</button></div>
+  <dialog id="pwa-help" aria-labelledby="pwa-title"><img src="/assets/icons/icon-192.png" alt=""><h2 id="pwa-title">安装心电记录</h2><p id="pwa-instructions"></p><p class="pwa-hint">沿用已有账号。联网查看自己的采集记录与分析结果，无需重新注册。</p><p id="pwa-feedback" role="status"></p><div class="dialog-actions"><button id="pwa-help-close" class="button secondary" type="button">稍后再说</button><button id="pwa-confirm" class="button primary" type="button" hidden>安装应用</button></div></dialog>
+  <section id="login-panel" class="login-shell" hidden>
+    <form id="login-form" class="panel login-card">
+      <span class="brandmark" aria-hidden="true">⌁</span><p class="eyebrow">ECG WORKSPACE</p>
+      <h1>你的心电记录</h1><p class="muted">登录后查看自己的采集记录、波形与分析结果。</p>
+      <label for="username">账号</label><input id="username" autocomplete="username" required maxlength="32" autocapitalize="none" spellcheck="false">
+      <label for="password">密码</label><input id="password" type="password" autocomplete="current-password" required maxlength="128">
+      <p id="login-error" class="form-error" role="alert"></p><button id="login-submit" class="button primary" type="submit">登录工作台</button>
+      <p class="small muted">账号由项目管理员创建。此系统用于课程研究。</p>
+    </form>
+  </section>
+  <div id="workspace-shell" hidden>
+  <header class="topbar"><div class="brand"><span class="brandmark" aria-hidden="true">⌁</span><div><strong>心电数据工作台</strong><span class="subtitle">ECG · 端云协同课程演示</span></div></div><div class="topright"><span id="deployment-label" class="pill neutral">电脑联调</span><span id="service" class="connection">正在连接…</span><button id="settings" class="iconbutton" aria-label="设置访问凭证">设置</button></div></header>
+  <main>
+    <div class="account-strip"><span id="account-name">本机工作台</span><div><a id="manage-devices" class="button secondary" href="/devices" hidden>设备管理</a><button id="admin" class="button secondary" hidden>账号与待分配记录</button><button id="change-password" class="button secondary" hidden>修改密码</button><button id="logout" class="button secondary" hidden>退出登录</button></div></div>
+    <div class="page-heading"><div><p class="eyebrow">DATA WORKSPACE</p><h1>从采集到可见</h1><p class="muted">原始数据有迹可循，每次上传都有确认。</p></div><button id="refresh" class="button secondary">↻ 刷新记录</button></div>
+    <div id="notice" class="notice" role="status" hidden></div>
+    <section class="panel device-card" aria-label="设备状态"><div><span class="eyebrow">采集终端</span><h2 id="device-state">尚未收到设备状态</h2></div><p id="device-signal" class="muted">设备状态与历史记录独立更新</p><span id="device-seen" class="small muted"></span></section>
+    <form id="filters" class="filters panel">
+      <label>搜索记录<input id="query" type="search" placeholder="名称、备注或编号" maxlength="100"></label>
+      <label>设备<select id="filter-device"><option value="">全部设备</option></select></label>
+      <label>来源<select id="filter-source"><option value="">全部来源</option><option value="serial">串口采集</option><option value="demo">本地合成</option><option value="replay">文件回放</option></select></label>
+      <label>开始日期<input id="date-from" type="date"></label><label>结束日期<input id="date-to" type="date"></label>
+      <label>记录范围<select id="trash-filter"><option value="false">我的记录</option><option value="true">回收站</option></select></label>
+      <button class="button primary" type="submit">筛选</button><button id="reset-filters" type="button" class="button secondary">重置</button>
+    </form>
+    <div class="workspace">
+      <aside class="sessions-panel panel"><div class="panel-heading"><h2>采集记录 <span id="session-count" class="count">0</span></h2><span class="small muted">每页 20 条</span></div><div id="sessions" class="sessions"><p class="empty-hint">正在读取记录…</p></div><div class="record-pagination"><button id="records-prev" class="button secondary">上一页</button><span id="records-page">1 / 1</span><button id="records-next" class="button secondary">下一页</button></div></aside>
+      <section class="detail">
+        <div id="empty" class="panel empty"><span class="empty-symbol">⌁</span><h2>等待你的测量记录</h2><p>在终端选择本人的账号，完成测量。<br>保存后点击“上传并分析”，再在手机刷新记录。<br>记录到达后，可查看测量总结、波形和云端分析。</p><span class="pill neutral">离线记录保留在终端，联网后可重试上传</span></div>
+        <div id="content" hidden>
+          <div class="record-tools"><p id="record-note" class="muted"></p><div><button id="edit-record" class="button secondary">名称与备注</button><button id="trash-record" class="button secondary">移入回收站</button></div></div>
+          <div class="record-header"><div><div class="record-title"><h2 id="record-name">采集会话</h2><span id="source" class="pill"></span><span id="provenance-kind" class="pill neutral"></span></div><p id="record-id" class="record-id"></p></div><button id="download" class="button secondary">↓ 下载完整 CSV</button></div>
+          <div class="stats"><div class="stat panel"><span>已接收采样点</span><strong id="samples">—</strong><small id="chunks">—</small></div><div class="stat panel"><span>记录时长</span><strong id="duration">—</strong><small>按采样点数计算</small></div><div class="stat panel"><span>采样率</span><strong>360 <em>Hz</em></strong><small>单通道原始心电</small></div><div class="stat panel"><span>有效采样占比</span><strong id="valid">—</strong><small>依据 ADC 范围及记录标记</small></div></div>
+          <section id="measurement-panel" class="panel measurement-panel" hidden aria-labelledby="measurement-title">
+            <h2 id="measurement-title">本次测量总结</h2><p id="measurement-state" class="measurement-state" role="status"></p>
+            <dl class="measurement-grid"><div><dt>测量时长</dt><dd id="measurement-plan"></dd></div><div><dt>有效 RR 心率（终端）</dt><dd id="measurement-heart"></dd></div><div><dt>实采质量统计（终端）</dt><dd id="measurement-quality"></dd></div><div><dt>已保存分类（终端）</dt><dd id="measurement-class"></dd></div></dl>
+            <p id="measurement-next" class="measurement-next"></p><p class="measurement-caption">采样时长不包含断流等待时间。质量通过时间逐点累计，心率按有效实采 RR 间期加权。有效采样比例不等同可分析比例；N 类不代表临床正常，分类用于课程研究。</p>
+          </section>
+          <div id="wave-panel" class="wave-panel"><div class="wave-heading"><div><span class="wave-dot"></span><strong>原始波形</strong><span id="wave-origin" class="wave-note"></span></div><div class="wave-controls"><label for="window">窗口</label><select id="window"><option value="10">10 秒</option><option value="30">30 秒</option><option value="60">60 秒</option></select><button id="follow" class="follow active" aria-pressed="true">跟随最新</button></div></div><div class="chart-wrap"><canvas id="chart" aria-label="原始ADC波形，横轴为接收采样序号对应秒数，模型R点可在下方心搏明细中定位" role="img"></canvas><div id="chart-empty" hidden>该范围暂无数据</div></div><div id="marker-legend" class="marker-legend" hidden><label><input id="show-markers" type="checkbox" checked> 显示模型 R 点</label><span class="legend-N">● N</span><span class="legend-S">● S</span><span class="legend-V">● V</span><span id="marker-count"></span></div><div class="wave-footer"><span>纵轴：ADC 原始值</span><span>无效点与段边界断开显示 · 标记不改变原始数据</span></div></div>
+          <div class="history panel"><label for="position">历史位置</label><input id="position" type="range" min="0" max="1" value="1" step="1" aria-label="历史波形结束位置"><span id="position-label">—</span></div>
+          <div class="bottom-grid">
+            <section class="panel delivery">
+              <div class="panel-heading"><h2>上传与存储</h2><span id="upload-status" class="pill"></span></div>
+              <dl>
+                <div><dt>设备</dt><dd id="device">—</dd></div>
+                <div><dt>采集开始（设备记录）</dt><dd id="capture-time">—</dd></div>
+                <div><dt id="first-upload-label">云端上传登记</dt><dd id="first-upload">—</dd></div>
+                <div><dt id="last-upload-label">云端最后收块</dt><dd id="received">—</dd></div>
+                <div><dt>源会话状态</dt><dd id="source-status">—</dd></div>
+              </dl>
+              <p id="provenance-note" class="provenance-note" hidden></p>
+              <p id="clock-note" class="clock-note" role="status">设备时钟尚未核准；采集日期保留原始记录。</p>
+              <p class="storage-note">时间显示为本机时区；上传登记不代表采集时刻。接收确认表示数据已保存，重复上传不会增加点数。</p>
+            </section>
+            <section class="panel model">
+              <div class="panel-heading"><h2>模型分析</h2><span id="model-status" class="pill neutral">未接入模型</span></div>
+              <div class="model-body">
+                <p id="model-name" class="model-name">此阶段只验证数据链路</p><p id="model-message" role="status">分类结果与模型复核暂为空</p>
+                <div id="model-result" hidden><strong id="beat-count"></strong><div class="class-counts"><div><span>N 类</span><strong id="class-N">0</strong></div><div><span>S 类</span><strong id="class-S">0</strong></div><div><span>V 类</span><strong id="class-V">0</strong></div></div><p id="model-time" class="small muted"></p></div>
+                <div id="input-summary" class="input-summary" hidden>
+                  <div class="input-counts"><div><span>有效实采点</span><strong id="eligible-count">—</strong></div><div><span>来源 / ADC 跳过点</span><strong id="skipped-count">—</strong></div></div>
+                  <p class="small muted">有效实采点仍需满足信号质量、上下文和心搏条件，不能按点数直接换算心搏数。</p>
+                  <ul id="skip-reasons" class="reason-list"></ul><p id="quality-reasons" class="quality-reasons" hidden></p>
+                </div>
+                <button id="analyze" class="button primary" hidden>开始云端分析</button>
+                <p id="model-note" class="model-note" hidden>仅分析有效实采片段。N 类含束支阻滞，S 类能力有限；课程模型输出不作为临床诊断。</p>
+              </div>
+            </section>
+          </div>
+          <section id="beats-panel" class="panel beats-panel" hidden>
+            <div class="panel-heading"><div><h2>心搏明细 <span id="beats-total" class="count"></span></h2><p class="muted">点击时间定位原始波形 · 每页 10 搏</p></div><span id="selected-beat" class="small muted" role="status"></span></div>
+            <div class="beat-table-scroll" tabindex="0" role="region" aria-label="心搏明细，可横向滚动">
+              <table class="beat-table"><caption>时间按采样编号 / 360 换算；N、S、V 为模型分数，不是概率或准确率。</caption><thead><tr><th scope="col">采样时间</th><th scope="col">分类</th><th scope="col">N 分数</th><th scope="col">S 分数</th><th scope="col">V 分数</th><th scope="col">复核标记</th></tr></thead><tbody id="beats-body"></tbody></table>
+            </div>
+            <div class="beat-pagination"><button id="beats-prev" class="button secondary">上一页</button><span id="beats-page" role="status"></span><button id="beats-next" class="button secondary">下一页</button></div>
+            <p class="beats-note">N 类包含束支阻滞；“未标记”仅表示模型未触发复核标记，不代表临床正常。原始波形与模型定位支路的峰位可能略有差异。</p>
+          </section>
+        </div>
+      </section>
+    </div>
+    <footer><span id="service-location">课程演示 · 本地服务</span> <span>时间轴由接收采样编号换算，跨中断不代表精确连续时间。有效采样比例不等同于诊断质量。</span></footer>
+  </main>
+  </div>
+  <dialog id="record-editor"><form id="record-form"><h2>名称与备注</h2><label for="edit-name">记录名称</label><input id="edit-name" maxlength="100"><label for="edit-note">备注</label><textarea id="edit-note" maxlength="1000" rows="4"></textarea><p id="edit-error" class="form-error" role="alert"></p><div class="dialog-actions"><button type="button" class="button secondary" onclick="this.closest('dialog').close()">取消</button><button type="submit" class="button primary">保存</button></div></form></dialog>
+  <dialog id="admin-dialog" class="admin-dialog"><div class="panel-heading"><h2>账号管理</h2><button class="button secondary" onclick="this.closest('dialog').close()">关闭</button></div><p>每个账号仅查看分配给自己的记录。旧记录需明确指定归属。</p><div id="user-list"></div><form id="new-user-form"><label for="new-username">新账号（3–32 位字母、数字、横线或下划线）</label><input id="new-username" required maxlength="32" autocomplete="off" autocapitalize="none"><label for="new-password">初始密码（至少 10 个字符）</label><input id="new-password" type="password" required minlength="10" maxlength="128" autocomplete="new-password"><button type="submit" class="button primary">创建普通账号</button></form><p id="admin-error" class="form-error" role="alert"></p><h2>待分配记录</h2><div id="unassigned-list"></div></dialog>
+  <dialog id="credentials"><form method="dialog"><h2>访问设置</h2><p>本机访问无需填写。连接已设置凭证的服务时，在此输入。</p><label for="token">访问凭证</label><input id="token" type="password" autocomplete="off"><div class="dialog-actions"><button class="button secondary" value="cancel">取消</button><button id="save-token" class="button primary" value="save">保存</button></div></form></dialog>
+  <dialog id="password-dialog"><form id="password-form"><h2 id="password-title">修改密码</h2><p>密码修改后，该账号的原有登录全部失效，采集记录保留。</p><div id="current-password-field"><label for="current-password">旧密码</label><input id="current-password" type="password" maxlength="128" autocomplete="current-password" required></div><label for="replacement-password">新密码（10–128 个字符）</label><input id="replacement-password" type="password" minlength="10" maxlength="128" autocomplete="new-password" required><label for="confirm-password">再次输入新密码</label><input id="confirm-password" type="password" minlength="10" maxlength="128" autocomplete="new-password" required><p id="password-error" class="form-error" role="alert"></p><div class="dialog-actions"><button type="button" class="button secondary" onclick="this.closest('dialog').close();document.getElementById('password-form').reset()">取消</button><button id="password-submit" type="submit" class="button primary">确认修改</button></div></form></dialog>
+</body>
+</html>

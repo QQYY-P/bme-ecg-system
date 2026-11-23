@@ -1,0 +1,117 @@
+{
+  "format": "ecg-resnet1d-fused-numpy-v1",
+  "model_id": "three_detected_ensemble_42_43_44",
+  "labels": [
+    "N",
+    "PVC",
+    "PAC"
+  ],
+  "sample_rate": 360,
+  "weights": [
+    {
+      "file": "seed42.npz",
+      "sha256": "76ebb0b5160111b14a1c110e129b4260e96af574dd5ae06788fbcf90d58da072",
+      "source_sha256": "c909156079a9a0cb25faa49733556578eed38028cb3bd2cf192ed2a44e558092"
+    },
+    {
+      "file": "seed43.npz",
+      "sha256": "e6124fc2ceb2560727da4605a57cd98817fbf5ca0c10e7579f87a9e678322afc",
+      "source_sha256": "24b1e4670a06a7b1ba6b38d49a664adc8e9687600031a69b07933872bc142cba"
+    },
+    {
+      "file": "seed44.npz",
+      "sha256": "8c455acec90779e27774873aa152bf0f31668f886be3146e2e6789c27786fb45",
+      "source_sha256": "bee2ff100d98075d26ef9de563e10f4778a0a1e20218e0121632f4a32a2daed6"
+    }
+  ],
+  "note": "三分类模型无 OTHER 拒识类；概率未经校准；AD8232 硬件域尚未标注验证。",
+  "reference_validation": {
+    "matrix": [
+      [
+        10746,
+        11,
+        2533,
+        0,
+        1
+      ],
+      [
+        0,
+        325,
+        3,
+        0,
+        0
+      ],
+      [
+        60,
+        99,
+        71,
+        0,
+        2
+      ],
+      [
+        14,
+        6,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        189,
+        1,
+        0,
+        0
+      ]
+    ],
+    "matrix_order": [
+      "N",
+      "PVC",
+      "PAC",
+      "OTHER",
+      "MISS_OR_SPURIOUS"
+    ],
+    "detector": {
+      "tp": 13869,
+      "fn": 3,
+      "fp": 190,
+      "recall": 0.9997837370242214,
+      "precision": 0.9864855252862935,
+      "f1": 0.9930901149260678,
+      "median_abs_error_ms": 2.7777777777777777
+    },
+    "per_class": {
+      "N": {
+        "tp": 10746,
+        "fp": 74,
+        "fn": 2545,
+        "precision": 0.9931608133086877,
+        "recall": 0.8085170416071026,
+        "f1": 0.8913773796192609
+      },
+      "PVC": {
+        "tp": 325,
+        "fp": 305,
+        "fn": 3,
+        "precision": 0.5158730158730159,
+        "recall": 0.9908536585365854,
+        "f1": 0.6784968684759917
+      },
+      "PAC": {
+        "tp": 71,
+        "fp": 2538,
+        "fn": 161,
+        "precision": 0.027213491759294748,
+        "recall": 0.30603448275862066,
+        "f1": 0.049982400563181976
+      }
+    },
+    "end_to_end_macro_f1": 0.5399522162194782,
+    "matched_target_count": 13848,
+    "matched_only_macro_f1": 0.5979618456180131,
+    "target_coverage": 1.0,
+    "rejected_detections": 0,
+    "predicted_detections": 14059,
+    "true_target_rejected": 0,
+    "other_or_spurious_rejected": 0
+  }
+}

@@ -1,0 +1,15 @@
+# Current app runtime only: display, signal analysis, serial and recording.
+# Raspberry Pi 2/ARM32 preferred installation is through Raspberry Pi OS apt:
+# sudo apt install python3-numpy python3-scipy python3-serial python3-tk
+# See README.txt for X11/Openbox and Chinese font packages.
+# This is an optional pip dependency range, NOT a tested version lock.
+# Do not use sudo pip or --break-system-packages. Use a virtual environment if needed.
+numpy>=1.24,<3
+scipy>=1.10,<2
+pyserial>=3.5,<4
+reportlab>=4,<5
+# PDF export on Raspberry Pi OS: python3-reportlab fonts-wqy-microhei
+# tkinter/Tk, sqlite3 and threading are not PyPI dependencies here.
+# The current classifier loads bundled cardioedge/portable_weights.npz through
+# its NumPy adapter; PyTorch, ONNX and a generic TFLite runtime are not required.
+# Optional bounded capture / offline audit dependencies: requirements-stage.txt.

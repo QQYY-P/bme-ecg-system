@@ -1,0 +1,34 @@
+flowchart LR
+    E[心电电极] --> A[AD8232 心电模块<br/>模拟信号调理 · 导联检测]
+    A -->|模拟输出与导联状态| M[STM32F103<br/>TIM3 定时触发 ADC1 / DMA<br/>360 Hz · 12 位 ADC]
+    M -->|USART1 · 115200 · 8N1<br/>序号 + ADC 高字节 + ADC 低字节| U[USB-TTL 转换器]
+
+    subgraph PI[树莓派 2 Model B · 当前无模型程序]
+      direction LR
+      S[串口接收与协议解析<br/>序号检查 · 无效点标记] --> C[采集与会话管理<br/>数据批次 · 连续段 · 状态]
+      D[合成模拟 / CSV 回放] -.-> C
+      C --> F[显示支路<br/>50 Hz 陷波 · 原始波形保留]
+      C --> R[分析支路<br/>R 峰检测 → 心率 / RR]
+      C --> W[原始记录<br/>数据块 · 原始串口字节 · SQLite 索引]
+      F --> G[Tkinter 波形界面<br/>原始 / 处理后波形 · 心率 / RR<br/>连接与信号状态 · 开始 / 停止 / 暂停显示]
+      R --> G
+      W --> H[历史记录 / 完整 CSV 导出]
+      H --> G
+    end
+
+    U -->|USB 串口| S
+    G -->|X11 图形会话 / HDMI| LCD[树莓派外接显示器]
+    PC[笔记本 · VS Code<br/>开发 / 传输 / 日志检查] -.->|以太网 · SSH| PI
+
+    classDef hardware fill:#eff6ff,stroke:#3b82f6,color:#172554;
+    classDef software fill:#ecfdf5,stroke:#10b981,color:#064e3b;
+    classDef storage fill:#fff7ed,stroke:#ea580c,color:#7c2d12;
+    classDef support fill:#f8fafc,stroke:#64748b,color:#334155;
+    class E,A,M,U,LCD hardware;
+    class S,C,F,R,G software;
+    class W,H storage;
+    class D,PC support;
+
+%% 当前代码结构图，不代表整机验收通过。
+%% 实物串口采集与外接显示器效果仍待现场验证。
+%% 暂停显示不停止原始记录；当前不含分类模型、云端或移动 App。

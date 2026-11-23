@@ -1,0 +1,19 @@
+{
+  "keil_errors": 0,
+  "keil_warnings": 0,
+  "code_bytes": 10116,
+  "ro_bytes": 928,
+  "rw_bytes": 80,
+  "zi_bytes": 1976,
+  "pin": "PC13/SW2",
+  "debounce_ms": 30,
+  "sample_rate_hz": 360,
+  "simulated_period_samples": 300,
+  "simulated_bpm": 72,
+  "decoded_samples": 1440,
+  "invalid_guard_samples": 72,
+  "sequence_discontinuities": 0,
+  "filter_final_segment_samples": 720,
+  "physical_button_test": false,
+  "flashed": false
+}
