@@ -1,4 +1,6 @@
 树莓派心电终端代码设计 V1.0：本地屏幕版
+
+文档已归入 docs/。下文未特别标注的源码、运行命令及本地目录均以“树莓派心电终端/”为基准；历史验证按原日期保留。
 日期：2026-10-26
 状态：代码设计稿。本文中的新增模块、界面和验收项目尚未实现或验收。
 
@@ -310,7 +312,7 @@ E. 后续课程功能
 
 设计依据
 
-本地：第二阶段实施方案_Pi2_现有三分类.txt；课程报告要求与实现步骤.txt。
+本文同目录：第二阶段实施方案_Pi2_现有三分类.txt；课程报告要求与实现步骤.txt。
 本地：protocol.py、ecg_classifier.py、numpy_predictor.py、models/manifest.json、tests/fixtures/README.txt。
 Python Tkinter 文档：https://docs.python.org/3.13/library/tkinter.html#threading-model
 Raspberry Pi OS 版本/桌面说明：https://www.raspberrypi.com/documentation/computers/os.html
