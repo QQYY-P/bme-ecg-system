@@ -12,6 +12,8 @@ function harness() {
     sessionStorage:{getItem:()=>'',removeItem(){},setItem(){}},ResizeObserver:class{observe(){}},
     URLSearchParams,AbortSignal,console,fetch:async()=>({ok:false}),setTimeout,clearTimeout,setInterval(){}});
   const root=path.join(__dirname,'..','web');
+  vm.runInContext(fs.readFileSync(path.join(root,'connection.js'),'utf8'),context);
+  vm.runInContext(fs.readFileSync(path.join(root,'desktop_core.js'),'utf8'),context);
   vm.runInContext(fs.readFileSync(path.join(root,'devices.js'),'utf8'),context);
   vm.runInContext(fs.readFileSync(path.join(root,'measurement.js'),'utf8'),context);
   vm.runInContext(fs.readFileSync(path.join(root,'app.js'),'utf8'),context);
@@ -72,4 +74,31 @@ test('late password-change response does not log out a newer account',async()=>{
   const pending=h.element('password-form').onsubmit({preventDefault(){}});
   h.state.epoch++;h.state.user={id:'bob'};finish({ok:true});await pending;
   assert.equal(h.state.user.id,'bob');
+});
+
+test('initial connection failure can be retried without leaving login disabled',async()=>{
+  const h=harness();h.context.fetch=async()=>{throw new TypeError('Failed to fetch');};
+  await h.context.initialize();assert.equal(h.element('login-submit').disabled,true);
+  h.context.fetch=async url=>({ok:true,json:async()=>url.endsWith('/config')?{enabled:true}:{user:{id:'alice',username:'alice'},csrf_token:'test'},headers:{get:()=>null}});
+  h.context.refresh=async()=>{};
+  await h.context.initialize();assert.equal(h.element('login-submit').disabled,false);
+  assert.equal(h.state.user.id,'alice');assert.equal(h.element('workspace-shell').hidden,false);
+});
+
+test('a failed authentication probe is not presented as an ordinary signed-out session',async()=>{
+  const h=harness();h.context.fetch=async url=>{
+    if(url.endsWith('/config'))return {ok:true,json:async()=>({enabled:true})};
+    throw new TypeError('Failed to fetch');
+  };
+  await h.context.initialize();assert.match(h.element('login-error').textContent,/连接|网络|服务/);
+  assert.equal(h.element('login-submit').disabled,true);
+});
+
+test('late login failure cannot overwrite a newer account login panel',async()=>{
+  const h=harness();let reject;
+  h.context.jsonRequest=()=>new Promise((_,r)=>reject=r);
+  const pending=h.element('login-form').onsubmit({preventDefault(){}});
+  h.state.epoch++;h.element('login-error').textContent='new account message';
+  reject(new Error('old failure'));await pending;
+  assert.equal(h.element('login-error').textContent,'new account message');
 });

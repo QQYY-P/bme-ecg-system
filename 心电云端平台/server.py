@@ -738,6 +738,21 @@ def create_app(data_dir=None, token=None, device_id=None, auth_enabled=None, coo
 
     app.mount('/assets', StaticFiles(directory=ROOT / 'web'), name='assets')
 
+    @app.get('/downloads/{filename}')
+    def desktop_download(filename: str):
+        allowed = {
+            'ecg-workspace-windows.zip': ('心电工作台-Windows免安装.zip', 'application/zip'),
+            'ecg-workspace-windows.zip.sha256': ('心电工作台-Windows免安装.zip.sha256', 'text/plain'),
+        }
+        if filename not in allowed:
+            raise HTTPException(404, '下载文件不存在')
+        name, content_type = allowed[filename]
+        folder = ROOT / 'deploy/dist/desktop'
+        artifact = folder / name
+        if artifact.is_symlink() or not artifact.is_file() or artifact.resolve().parent != folder.resolve():
+            raise HTTPException(404, '电脑端下载尚未发布，请先使用网页')
+        return FileResponse(artifact, media_type=content_type, filename=name)
+
     @app.get('/manifest.webmanifest')
     def app_manifest():
         return FileResponse(ROOT / 'web' / 'manifest.webmanifest',media_type='application/manifest+json')

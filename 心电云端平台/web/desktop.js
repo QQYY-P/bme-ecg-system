@@ -1,58 +1,46 @@
 'use strict';
-
-// Presentation only: use existing DOM and handlers, never duplicate account data.
-function createDesktopControls({document, viewport, identity}) {
-  const get=id=>document.getElementById(id);
-  const wave=get('wave-workspace'), dialog=get('desktop-wave-dialog'), button=get('desktop-focus');
-  const parent=wave.parentNode, next=wave.nextSibling;
-  let focused=false, previous=identity();
-  const ready=()=>viewport.matches && !get('workspace-shell').hidden && !get('content').hidden;
-  function restore() {
-    if(!focused) return;
-    focused=false;
-    parent.insertBefore(wave,next);
-    button.textContent='专注查看 · F';button.setAttribute('aria-pressed','false');
-    if(ready()) button.focus();
-  }
-  function setFocus(enabled) {
-    if(!enabled) {if(dialog.open) dialog.close();restore();return;}
-    if(focused || !ready() || document.querySelector('dialog[open]')) return;
-    focused=true;dialog.append(wave);
-    button.textContent='退出专注 · Esc';button.setAttribute('aria-pressed','true');
-    dialog.showModal();button.focus();
-  }
-  function sync() {
-    const current=identity();
-    if(!ready() || previous.epoch!==current.epoch || previous.selected!==current.selected) setFocus(false);
-    previous=current;
-    button.hidden=!viewport.matches;
-    get('desktop-record-nav').hidden=!viewport.matches;
-  }
-  button.addEventListener('click',()=>setFocus(!focused));
-  dialog.addEventListener('close',restore);
-  dialog.addEventListener('cancel',event=>{event.preventDefault();setFocus(false);});
-  for(const [id,target] of [['desktop-summary','desktop-overview'],['desktop-wave','wave-workspace'],['desktop-analysis','model-panel']]) {
-    get(id).addEventListener('click',()=>{if(ready()) get(target).scrollIntoView({block:'start',behavior:'auto'});});
-  }
-  document.addEventListener('keydown',event=>{
-    if(event.key==='Escape' && focused) {event.preventDefault();setFocus(false);return;}
-    if(!ready() || event.ctrlKey || event.altKey || event.metaKey || event.shiftKey || event.repeat) return;
-    const target=event.target;
-    if(target?.isContentEditable || ['INPUT','TEXTAREA','SELECT','BUTTON','A'].includes(target?.tagName)) return;
-    if(document.querySelector('dialog[open]')) return;
-    if(event.key==='/') {event.preventDefault();get('query').focus();}
-    else if(event.key==='f') {event.preventDefault();setFocus(true);}
-  });
-  viewport.addEventListener('change',sync);
-  sync();
-  return {setFocus,sync};
+function resetDesktop(){
+  document.body.classList.remove('wave-focus','device-expanded');
+  $('wave-focus').setAttribute('aria-pressed','false');text('wave-focus','专注波形');
+  $('beat-filter').value='all';$('amplitude').value='1';
 }
-
-if(typeof module!=='undefined' && module.exports) module.exports={createDesktopControls};
-else {
-  const desktopControls=createDesktopControls({document,viewport:window.matchMedia('(min-width: 1024px)'),
-    identity:()=>({epoch:state.epoch,selected:state.selected})});
-  const observer=new MutationObserver(()=>desktopControls.sync());
-  for(const id of ['workspace-shell','content']) observer.observe(document.getElementById(id),{attributes:true,attributeFilter:['hidden']});
-  observer.observe(document.getElementById('record-id'),{childList:true});
+$('wave-focus').onclick=()=>{
+  const focused=document.body.classList.toggle('wave-focus');
+  $('wave-focus').setAttribute('aria-pressed',String(focused));text('wave-focus',focused?'退出专注':'专注波形');
+  draw();
+};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('wave-focus')){$('wave-focus').click();}});
+$('amplitude').onchange=()=>{state.amplitude=Number($('amplitude').value);draw();};
+$('beat-filter').onchange=()=>{state.beatFilter=$('beat-filter').value;view().page=0;renderBeats();draw();};
+function shiftWindow(direction){
+  const s=state.wave?.session;if(!s||s.session_id!==state.selected)return;
+  const width=Number($('window').value)*360;
+  $('position').value=ECGDesktop.windowEnd(Number($('position').value),direction*width,s.first_sample_id??0,s.last_sample_id??0,width);
+  state.follow=false;loadWave();
 }
+$('wave-previous').onclick=()=>shiftWindow(-1);$('wave-next').onclick=()=>shiftWindow(1);
+function stepBeat(direction){
+  const beats=ECGDesktop.filteredBeats(currentBeats(),state.beatFilter);if(!beats.length)return;
+  const current=beats.findIndex(b=>beatKey(b)===view().selected);
+  const index=current<0?(direction>0?0:beats.length-1):Math.max(0,Math.min(beats.length-1,current+direction));
+  view().page=Math.floor(index/PAGE_SIZE);selectBeat(beats[index]);
+}
+$('beat-previous').onclick=()=>stepBeat(-1);$('beat-next').onclick=()=>stepBeat(1);
+$('filters-toggle').onclick=()=>{
+  const expanded=$('filters').hidden;$('filters').hidden=!expanded;
+  $('filters-toggle').setAttribute('aria-expanded',String(expanded));
+};
+$('nav-records').onclick=()=>{$('sessions').scrollIntoView({behavior:'smooth',block:'start'});};
+$('nav-device').onclick=()=>{
+  const expanded=document.body.classList.toggle('device-expanded');$('nav-device').setAttribute('aria-expanded',String(expanded));
+};
+for(const id of ['download-desktop','nav-download','login-download'])$(id).onclick=()=>$('desktop-download').showModal();
+$('desktop-download-close').onclick=()=>$('desktop-download').close();
+let reconnecting=false;
+$('connection-retry').onclick=async()=>{
+  if(reconnecting)return;reconnecting=true;$('connection-retry').disabled=true;
+  try{if(state.ready)await refresh();else await initialize();}
+  finally{reconnecting=false;$('connection-retry').disabled=false;}
+};
+window.addEventListener('offline',()=>connectionStatus(connectionProblem(new TypeError('offline'))));
+window.addEventListener('online',()=>{$('connection-retry').click();});

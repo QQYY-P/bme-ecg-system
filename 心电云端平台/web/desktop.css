@@ -1,46 +1,38 @@
-/* Desktop enhancements are separate from the shared/mobile presentation. */
-.desktop-record-nav,.desktop-focus{display:none}
-#desktop-wave-dialog{width:calc(100vw - 48px);max-width:1800px;height:calc(100dvh - 48px);max-height:none;padding:20px;background:#f3f7f6;border-radius:16px;overflow:auto}
-#desktop-wave-dialog::backdrop{background:#071e25d9}
-#desktop-wave-dialog[open] #wave-workspace{height:100%;min-height:350px;display:flex;flex-direction:column;gap:14px}
-#desktop-wave-dialog .wave-panel{display:flex;flex-direction:column;flex:1;min-height:280px;margin:0}
-#desktop-wave-dialog .chart-wrap{flex:1;height:auto;min-height:190px}
-#desktop-wave-dialog .history{margin:0;flex:none}
-#desktop-wave-dialog label{margin:0;font-size:12px}
-#desktop-wave-dialog input[type=checkbox]{width:auto;padding:0}
-#desktop-wave-dialog input[type=range]{padding:0}
-@media(min-width:1024px){
-  :root{background:#f2f5f5;color:#203934}
-  .app-access{display:none}
-  .login-shell{grid-template-columns:minmax(320px,1fr) minmax(440px,1fr);gap:60px;padding:7vw;min-height:100dvh;background:radial-gradient(ellipse at 15% 40%,#cfebe1 0,transparent 58%),#f4f8f6}
-  .login-shell::before{content:'每次采集，都有迹可循。\A查看记录 · 回放波形 · 云端分析';white-space:pre-line;font-size:clamp(24px,2.5vw,38px);line-height:2.5;font-weight:600;letter-spacing:1px;color:#135c50;justify-self:start}
-  .login-card{width:420px;padding:38px;border-radius:18px;border-color:#d7e7df;box-shadow:0 16px 55px #174c3412}
-  .topbar{position:sticky;top:0;z-index:20;height:68px;padding:0 28px;box-shadow:0 2px 12px #163d2f04}
-  .brand strong{font-size:18px}.brandmark{width:38px;height:38px;font-size:39px;line-height:30px;border-radius:10px}.subtitle{letter-spacing:.6px}
-  main{max-width:1880px;padding:20px 28px 0;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:24px}
-  main>*{grid-column:1 / -1}.page-heading{grid-row:1;grid-column:1}.account-strip{grid-row:1;grid-column:2;align-self:center;gap:16px}
-  .account-strip{margin-bottom:16px;font-size:13px}.account-strip .button{min-height:36px;padding:7px 12px}
-  .page-heading{margin-bottom:16px;gap:18px}.page-heading h1{font-size:24px;letter-spacing:0}.page-heading .eyebrow{display:none}.page-heading .muted{font-size:12px}
-  .device-card{padding:14px 18px;gap:18px;margin-bottom:14px;border-left:3px solid #209a7f}.device-card h2{font-size:16px;margin-top:4px}.device-card .eyebrow{margin:0}
-  .filters{padding:14px 16px;gap:10px;margin-bottom:18px;border-radius:10px}.filters label{min-width:100px}.filters label:first-child{min-width:160px;flex:1.8}
-  .filters input,.filters select{font-size:13px;min-height:40px}.filters>.button{min-height:40px}.filters label{font-size:12px}
-  .workspace{grid-template-columns:280px minmax(0,1fr);gap:22px;align-items:start}
-  .sessions-panel{position:sticky;top:86px;min-height:420px;max-height:calc(100dvh - 106px);border-radius:12px;overflow:hidden}
-  .sessions{min-height:0}.sessions-panel>.panel-heading{padding:18px 16px}.sessions-panel h2{font-size:15px}
-  .session{padding:16px 12px;margin-bottom:6px}.session-title{font-size:14px;line-height:1.5}.session-sub{font-size:11px;line-height:1.6}.session-kind{font-size:10px}.session-data{font-size:12px}.session:hover{background:#f5faf7}.session.active{background:#eaf6ef;border-color:#a9d8c3}
-  .record-pagination{background:#fbfdfc;border-top:1px solid var(--line);flex:none;padding:12px}.record-pagination .button{min-height:36px}
-  .record-tools{margin-bottom:10px}.record-tools .button{min-height:36px;padding:7px 12px}.record-note{font-size:13px}
-  .record-header{margin-bottom:15px;gap:16px}.record-title h2{font-size:21px}.record-id{font-size:11px;line-height:1.7}.record-header .button{min-height:40px}
-  .desktop-record-nav{display:flex;align-items:center;gap:6px;padding:7px;margin-bottom:18px;border:1px solid #deebe4;border-radius:10px;background:#fff;position:sticky;top:76px;z-index:10;box-shadow:0 4px 15px #133d3008}
-  .desktop-record-nav button{border:0;background:none;border-radius:7px;color:#41685e;padding:8px 18px;min-height:36px;font-size:13px}.desktop-record-nav button:hover,.desktop-record-nav button:focus-visible{background:#edf6f0;color:#087f71}.desktop-record-nav span{margin-left:auto;padding-right:12px;font-size:11px;color:#7b8e85}
-  .desktop-focus{display:inline-flex;align-items:center;min-height:34px;border:1px solid #365d61;background:#173a40;color:#d3eee6;border-radius:6px;padding:6px 12px;font-size:12px}
-  .stats{gap:12px;margin-bottom:18px}.stat{padding:18px;border-radius:11px}.stat>span{font-size:12px}.stat strong{font-size:28px}.stat small{font-size:11px}
-  .measurement-panel{padding:18px;border-radius:12px}.measurement-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.measurement-grid dd{font-size:13px}
-  .wave-panel{border-radius:12px;overflow:hidden}.wave-heading{padding:16px 18px}.wave-controls{gap:10px}.wave-controls select{min-height:36px}.chart-wrap{height:clamp(280px,32vh,440px)}
-  .history{padding:14px 18px;gap:14px}.history label{font-size:12px}.history input{min-height:24px}.bottom-grid{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:18px}
-  .bottom-grid h2{font-size:15px}.model-body{font-size:13px}.delivery dl>div{font-size:12px;line-height:1.8}.beat-table{font-size:12px}.beat-table th{font-size:12px}.beats-panel h2{font-size:15px}
-  #desktop-overview,#wave-workspace,#model-panel{scroll-margin-top:142px}
-  .empty{min-height:480px;height:60vh}.empty p{font-size:14px;line-height:2}.panel{border-color:#e0e9e4}
-  footer{font-size:10px}
+/* Desktop workbench; existing phone layout remains a single readable column. */
+:root{--desk-ink:#203d45;--desk-green:#087f71;--desk-line:#dde8e6}
+body{background:#f3f6f7;color:var(--desk-ink)}
+button,a,input,select{outline-offset:4px}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #087f71}
+.connection-banner{display:flex;gap:20px;align-items:center;justify-content:space-between;background:#fff5e5;border-bottom:1px solid #e9d4ac;padding:14px max(24px,4vw);position:relative;z-index:4;color:#70521d}
+.connection-banner p{margin:5px 0 0;font-size:13px;line-height:1.6}.connection-banner button{white-space:nowrap}
+.desktop-nav{display:none}.app-access{gap:10px}.app-access>div:last-child{display:flex;gap:8px}.desktop-download-note{font-size:12px;line-height:1.8;color:#6d8186}
+#desktop-download{max-width:500px}#desktop-download h2{margin-bottom:12px}#desktop-download .primary{display:inline-flex;margin-top:10px;text-decoration:none}#desktop-download ol{padding-left:22px;font-size:14px;line-height:2}
+.login-download{background:none;border:0;color:#087f71;width:100%;text-decoration:underline}
+.page-actions,.beat-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.beat-actions{padding:0 20px 14px}.beat-actions label{display:flex;align-items:center;gap:8px;font-size:12px}.beat-actions select{min-height:36px;font-size:12px}
+.history .button{min-height:34px;padding:6px 10px}.wave-controls{flex-wrap:wrap}.wave-controls button,.wave-controls select{min-height:36px}.wave-controls select{color:#d9eee8}.wave-controls label{white-space:nowrap}
+#beats-empty{padding:22px;color:#6b8086;font-size:13px}.sessions-panel .session{border-radius:8px}.session.active{box-shadow:inset 3px 0 #087f71}.record-id{font-family:Consolas,monospace;font-size:10px}
+#content>.record-header,#content>.record-tools{margin-bottom:16px}.chart-wrap{height:320px}.model-note,.beats-note{line-height:1.8}
+.wave-focus .sessions-panel,.wave-focus .stats,.wave-focus .measurement-panel,.wave-focus .model,.wave-focus .delivery,.wave-focus .filters,.wave-focus .device-card{display:none!important}
+.wave-focus .workspace{grid-template-columns:minmax(0,1fr)!important}.wave-focus #content{display:block!important}.wave-focus .chart-wrap{height:min(62vh,620px)}
+@media(min-width:1180px){
+  #device-summary{display:none}.device-expanded #device-summary{display:flex}
+  .desktop-nav{display:flex;position:fixed;inset:0 auto 0 0;width:164px;background:#fff;border-right:1px solid var(--desk-line);padding:28px 16px;flex-direction:column;gap:8px;z-index:3}
+  .desktop-brand{display:flex;align-items:center;gap:9px;font-size:16px;margin-bottom:34px;font-weight:700;letter-spacing:.5px}.desktop-brand img{border-radius:12px}
+  .desktop-nav button{display:flex;align-items:center;gap:10px;border:0;background:none;color:#60777c;padding:12px;border-radius:8px;text-align:left;font-size:13px;min-height:46px}
+  .desktop-nav button.active{background:#e8f4ef;color:#087f71;font-weight:600}.desktop-nav button:hover{background:#f0f6f4}.desktop-nav small{margin-top:auto;color:#879a9c;font-size:10px;line-height:1.8;padding:12px}
+  #workspace-shell>.topbar{margin-left:164px;padding:0 26px;height:70px;background:#fff;border-bottom:1px solid var(--desk-line)}
+  #workspace-shell>main{margin-left:164px;padding:22px 26px 0;max-width:none}.app-access{padding-left:190px}
+  .account-strip{margin-bottom:16px}.account-strip .button{min-height:32px;padding:7px 10px;font-size:11px}.page-heading{margin-bottom:20px}.page-heading h1{font-size:25px;font-weight:600;letter-spacing:0}.page-heading .eyebrow{font-size:10px;letter-spacing:2px}
+  .filters{margin-bottom:16px}.workspace{grid-template-columns:230px minmax(0,1fr);gap:20px;align-items:start}
+  .sessions-panel{position:sticky;top:16px;max-height:calc(100vh - 55px);min-height:500px;display:flex;flex-direction:column}.sessions-panel>.panel-heading{padding:18px 14px}.sessions-panel .sessions{overflow:auto;max-height:calc(100vh - 180px)}.session{padding:14px 12px;margin-bottom:8px}.session-title{font-size:13px}
+  .detail{min-width:0}.stats{gap:10px;margin-bottom:16px}.stat{padding:14px}.stat strong{font-size:24px}.record-header h2{font-size:20px}
+  .topbar .subtitle{letter-spacing:.7px}.empty{height:520px;background:linear-gradient(145deg,#fff,#f2f8f5)}
+  footer{font-size:10px}.connection-banner{padding-left:190px}
 }
-@media(min-width:1024px) and (max-width:1250px){.workspace{grid-template-columns:240px minmax(0,1fr);gap:16px}main{padding-left:20px;padding-right:20px}.filters label{flex-basis:19%}.filters label:first-child{flex-basis:29%}.bottom-grid{grid-template-columns:1fr}.desktop-record-nav span{display:none}.wave-heading{gap:12px;flex-wrap:wrap}}
+@media(min-width:1440px){
+  #content{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:16px;align-items:start;grid-template-areas:'tools tools' 'header header' 'stats model' 'wave model' 'history model' 'beats model' 'measurement model' 'delivery model'}
+  #content>.record-tools{grid-area:tools;margin:0}#content>.record-header{grid-area:header;margin:0}#content>.stats{grid-area:stats;margin:0}.bottom-grid{display:contents}
+  #wave-panel{grid-area:wave}#content>.history{grid-area:history;margin:0}.model{grid-area:model;position:sticky;top:16px}.delivery{grid-area:delivery}#beats-panel{grid-area:beats;margin:0}#measurement-panel{grid-area:measurement;margin:0}
+  .stats{grid-template-columns:repeat(4,minmax(0,1fr))}.stat{padding:12px 10px}.stat strong{font-size:22px}.stat>span{font-size:10px}.stat small{font-size:9px}.model .panel-heading{padding:18px 16px}.model-body{padding:0 16px 16px}
+  .wave-heading{align-items:flex-start;gap:12px;flex-wrap:wrap}.chart-wrap{height:360px}.beat-table{min-width:460px}
+}
+@media(max-width:720px){.connection-banner{padding:12px;gap:10px;align-items:flex-start}.connection-banner p{font-size:12px}.connection-banner .button{padding:8px;font-size:12px}.app-access{flex-wrap:wrap}.app-access>div:last-child{flex-wrap:wrap}.page-actions{justify-content:flex-end}.wave-controls{gap:6px}.chart-wrap{height:270px}.history{flex-wrap:wrap}.history input{min-width:90px}.history .button{font-size:11px}.beat-actions{padding:0 12px 12px}.beat-actions .button{font-size:11px}.wave-focus .chart-wrap{height:50vh}}

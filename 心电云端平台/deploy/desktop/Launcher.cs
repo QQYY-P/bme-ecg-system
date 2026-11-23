@@ -12,7 +12,7 @@ using System.Windows.Forms;
 [assembly: AssemblyTitle("心电工作台")]
 [assembly: AssemblyDescription("心电云端平台 HTTPS 桌面入口")]
 [assembly: AssemblyProduct("心电工作台")]
-[assembly: AssemblyVersion("1.1.0.0")]
+[assembly: AssemblyVersion("1.2.0.0")]
 
 internal static class Launcher
 {
@@ -117,7 +117,7 @@ internal sealed class ConnectionWindow : Form
         var address=new LinkLabel {Text="复制云端地址",AutoSize=true,Margin=new Padding(0,5,0,5),LinkColor=Color.FromArgb(8,127,113)};
         address.LinkClicked+=delegate {try {Clipboard.SetText(LaunchPolicy.CloudUrl);detail.Text="云端地址已复制，可粘贴到浏览器打开。";} catch(ExternalException) {detail.Text="剪贴板暂不可用。云端地址："+LaunchPolicy.CloudUrl;}};
         links.Controls.Add(shortcut);links.Controls.Add(address);layout.Controls.Add(links);
-        layout.Controls.Add(new Label {Text="Windows 版 1.1 · 需要联网 · 沿用已有心电平台账号",AutoSize=true,ForeColor=Color.FromArgb(117,135,127),Font=new Font(Font.FontFamily,9F),Margin=new Padding(0,8,0,0)});
+        layout.Controls.Add(new Label {Text="Windows 版 1.2 · 需要联网 · 沿用已有心电平台账号",AutoSize=true,ForeColor=Color.FromArgb(117,135,127),Font=new Font(Font.FontFamily,9F),Margin=new Padding(0,8,0,0)});
         Shown+=delegate {CheckConnection();};
         FormClosing+=delegate {gate.Close();lifetime.Cancel();};
         FormClosed+=delegate {lifetime.Dispose();};

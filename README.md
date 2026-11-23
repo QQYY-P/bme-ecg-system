@@ -6,6 +6,14 @@ STM32 心电采集、树莓派显示与分析、云端记录平台的共同开�
 
 **所有协作者均可修改所有模块。没有按人员或目录划分的写入限制。** 每项任务单独建立分支，完成测试后通过 Pull Request 合并。
 
+## 应用下载
+
+**[下载 Windows 免安装版 ZIP](https://github.com/XiongBoT/bme-ecg-system/releases/download/desktop-v1.0.0/ecg-workbench-windows-portable.zip)** · [版本说明与校验文件](https://github.com/XiongBoT/bme-ecg-system/releases/tag/desktop-v1.0.0)
+
+适用于 Windows 10/11。下载后右键选择“全部解压”，双击文件夹中的 **心电工作台.exe**，使用已有的心电云端账号登录。无需安装 Python 或 Node.js，需要联网；详细操作见 [使用说明](心电云端平台/deploy/desktop/使用说明.txt)。
+
+这是已上线云端工作台的桌面入口，功能随云端更新。手机或其他电脑可直接使用 [网页版](https://62.234.150.104/)。仓库目前为私有，下载时需登录有仓库访问权限的 GitHub 账号；下载权限与心电平台登录账号分别管理。
+
 ## 从这里开始
 
 - [成员入门与协作流程](CONTRIBUTING.md)
