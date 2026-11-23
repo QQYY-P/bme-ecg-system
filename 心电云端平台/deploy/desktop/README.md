@@ -4,6 +4,8 @@
 
 下载：[Windows ZIP](https://62.234.150.104/downloads/ecg-workspace-windows.zip)、[SHA256](https://62.234.150.104/downloads/ecg-workspace-windows.zip.sha256)。也可从正式网页的“下载电脑端”打开说明。GitHub 仓库为私有，Release 下载需要仓库权限；普通使用者使用上述公网下载。
 
+无需自行构建的使用者请从 [项目首页的应用下载](../../../README.md#应用下载) 获取免安装包、版本说明与校验文件。
+
 实施与验收：
 
 1. 编译无控制台 C# 启动程序，优先 Edge、其次 Chrome 独立窗口，再回退默认浏览器。固定 HTTPS 地址，不读本地密码、不变更浏览器安全策略。
