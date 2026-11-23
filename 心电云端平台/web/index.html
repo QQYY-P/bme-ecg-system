@@ -6,19 +6,24 @@
   <meta name="apple-mobile-web-app-title" content="心电记录"><meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
   <link rel="icon" type="image/png" href="/assets/icons/icon-192.png">
-  <title>心电数据工作台 · 课程演示</title>
+  <title>心电工作台 · 记录与波形</title>
   <link rel="stylesheet" href="/assets/style.css">
   <link rel="stylesheet" href="/assets/workspace.css">
   <link rel="stylesheet" href="/assets/measurement.css">
   <link rel="stylesheet" href="/assets/pwa.css">
+  <link rel="stylesheet" href="/assets/desktop.css">
+  <script src="/assets/connection.js" defer></script>
+  <script src="/assets/desktop_core.js" defer></script>
   <script src="/assets/measurement.js" defer></script>
   <script src="/assets/devices.js" defer></script>
   <script src="/assets/app.js" defer></script>
   <script src="/assets/workspace.js" defer></script>
   <script src="/assets/pwa.js" defer></script>
+  <script src="/assets/desktop.js" defer></script>
 </head>
 <body>
-  <div class="app-access"><div><img src="/assets/icons/icon-192.png" width="32" height="32" alt=""><span id="pwa-context">把心电记录放到手机桌面</span></div><button id="pwa-install" class="button secondary" type="button">安装到手机</button></div>
+  <div id="connection-banner" class="connection-banner" role="status" hidden><div><strong id="connection-title"></strong><p id="connection-message"></p></div><button id="connection-retry" class="button secondary" type="button">重新连接</button></div>
+  <div class="app-access"><div><img src="/assets/icons/icon-192.png" width="32" height="32" alt=""><span id="pwa-context">把心电记录放到手机桌面</span></div><div><button id="download-desktop" class="button secondary" type="button">下载电脑端</button><button id="pwa-install" class="button secondary" type="button">安装到手机</button></div></div>
   <div id="pwa-network" class="app-message" role="status" hidden></div>
   <div id="pwa-update" class="app-message app-update" role="status" hidden><span>有新版本。刷新会清除尚未提交的输入，已保存记录不受影响。</span><button id="pwa-update-button" class="button secondary" type="button">更新并刷新</button></div>
   <dialog id="pwa-help" aria-labelledby="pwa-title"><img src="/assets/icons/icon-192.png" alt=""><h2 id="pwa-title">安装心电记录</h2><p id="pwa-instructions"></p><p class="pwa-hint">沿用已有账号。联网查看自己的采集记录与分析结果，无需重新注册。</p><p id="pwa-feedback" role="status"></p><div class="dialog-actions"><button id="pwa-help-close" class="button secondary" type="button">稍后再说</button><button id="pwa-confirm" class="button primary" type="button" hidden>安装应用</button></div></dialog>
@@ -29,17 +34,18 @@
       <label for="username">账号</label><input id="username" autocomplete="username" required maxlength="32" autocapitalize="none" spellcheck="false">
       <label for="password">密码</label><input id="password" type="password" autocomplete="current-password" required maxlength="128">
       <p id="login-error" class="form-error" role="alert"></p><button id="login-submit" class="button primary" type="submit">登录工作台</button>
-      <p class="small muted">账号由项目管理员创建。此系统用于课程研究。</p>
+      <p class="small muted">账号由项目管理员创建。此系统用于课程研究。</p><button id="login-download" type="button" class="login-download">下载 Windows 免安装版</button>
     </form>
   </section>
   <div id="workspace-shell" hidden>
+  <nav class="desktop-nav" aria-label="工作台导航"><div class="desktop-brand"><img src="/assets/icons/icon-192.png" width="33" height="33" alt="">心电工作台</div><button id="nav-records" type="button" class="active">▤　我的记录</button><button id="nav-device" type="button">▧　设备状态</button><button id="nav-download" type="button">↓　电脑客户端</button><small>ECG WORKSPACE<br>记录 · 分析 · 回看<br>课程研究用途</small></nav>
   <header class="topbar"><div class="brand"><span class="brandmark" aria-hidden="true">⌁</span><div><strong>心电数据工作台</strong><span class="subtitle">ECG · 端云协同课程演示</span></div></div><div class="topright"><span id="deployment-label" class="pill neutral">电脑联调</span><span id="service" class="connection">正在连接…</span><button id="settings" class="iconbutton" aria-label="设置访问凭证">设置</button></div></header>
   <main>
     <div class="account-strip"><span id="account-name">本机工作台</span><div><a id="manage-devices" class="button secondary" href="/devices" hidden>设备管理</a><button id="admin" class="button secondary" hidden>账号与待分配记录</button><button id="change-password" class="button secondary" hidden>修改密码</button><button id="logout" class="button secondary" hidden>退出登录</button></div></div>
-    <div class="page-heading"><div><p class="eyebrow">DATA WORKSPACE</p><h1>从采集到可见</h1><p class="muted">原始数据有迹可循，每次上传都有确认。</p></div><button id="refresh" class="button secondary">↻ 刷新记录</button></div>
+    <div class="page-heading"><div><p class="eyebrow">DATA WORKSPACE</p><h1>我的心电记录</h1><p class="muted">选择一次测量，查看波形、信号质量与分析结果。</p></div><div class="page-actions"><button id="filters-toggle" class="button secondary" aria-expanded="false" aria-controls="filters">筛选记录</button><button id="refresh" class="button secondary">↻ 刷新记录</button></div></div>
     <div id="notice" class="notice" role="status" hidden></div>
-    <section class="panel device-card" aria-label="设备状态"><div><span class="eyebrow">采集终端</span><h2 id="device-state">尚未收到设备状态</h2></div><p id="device-signal" class="muted">设备状态与历史记录独立更新</p><span id="device-seen" class="small muted"></span></section>
-    <form id="filters" class="filters panel">
+    <section id="device-summary" class="panel device-card" aria-label="设备状态"><div><span class="eyebrow">采集终端</span><h2 id="device-state">尚未收到设备状态</h2></div><p id="device-signal" class="muted">设备状态与历史记录独立更新</p><span id="device-seen" class="small muted"></span></section>
+    <form id="filters" class="filters panel" hidden>
       <label>搜索记录<input id="query" type="search" placeholder="名称、备注或编号" maxlength="100"></label>
       <label>设备<select id="filter-device"><option value="">全部设备</option></select></label>
       <label>来源<select id="filter-source"><option value="">全部来源</option><option value="serial">串口采集</option><option value="demo">本地合成</option><option value="replay">文件回放</option></select></label>
@@ -60,8 +66,8 @@
             <dl class="measurement-grid"><div><dt>测量时长</dt><dd id="measurement-plan"></dd></div><div><dt>有效 RR 心率（终端）</dt><dd id="measurement-heart"></dd></div><div><dt>实采质量统计（终端）</dt><dd id="measurement-quality"></dd></div><div><dt>已保存分类（终端）</dt><dd id="measurement-class"></dd></div></dl>
             <p id="measurement-next" class="measurement-next"></p><p class="measurement-caption">采样时长不包含断流等待时间。质量通过时间逐点累计，心率按有效实采 RR 间期加权。有效采样比例不等同可分析比例；N 类不代表临床正常，分类用于课程研究。</p>
           </section>
-          <div id="wave-panel" class="wave-panel"><div class="wave-heading"><div><span class="wave-dot"></span><strong>原始波形</strong><span id="wave-origin" class="wave-note"></span></div><div class="wave-controls"><label for="window">窗口</label><select id="window"><option value="10">10 秒</option><option value="30">30 秒</option><option value="60">60 秒</option></select><button id="follow" class="follow active" aria-pressed="true">跟随最新</button></div></div><div class="chart-wrap"><canvas id="chart" aria-label="原始ADC波形，横轴为接收采样序号对应秒数，模型R点可在下方心搏明细中定位" role="img"></canvas><div id="chart-empty" hidden>该范围暂无数据</div></div><div id="marker-legend" class="marker-legend" hidden><label><input id="show-markers" type="checkbox" checked> 显示模型 R 点</label><span class="legend-N">● N</span><span class="legend-S">● S</span><span class="legend-V">● V</span><span id="marker-count"></span></div><div class="wave-footer"><span>纵轴：ADC 原始值</span><span>无效点与段边界断开显示 · 标记不改变原始数据</span></div></div>
-          <div class="history panel"><label for="position">历史位置</label><input id="position" type="range" min="0" max="1" value="1" step="1" aria-label="历史波形结束位置"><span id="position-label">—</span></div>
+          <div id="wave-panel" class="wave-panel"><div class="wave-heading"><div><span class="wave-dot"></span><strong>原始波形</strong><span id="wave-origin" class="wave-note"></span></div><div class="wave-controls"><label for="window">窗口</label><select id="window"><option value="5">5 秒</option><option value="10">10 秒</option><option value="30">30 秒</option><option value="60">60 秒</option></select><label for="amplitude">幅度</label><select id="amplitude"><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option></select><button id="wave-focus" class="follow" aria-pressed="false">专注波形</button><button id="follow" class="follow active" aria-pressed="true">跟随最新</button></div></div><div class="chart-wrap"><canvas id="chart" aria-label="原始ADC波形，横轴为接收采样序号对应秒数，模型R点可在下方心搏明细中定位" role="img"></canvas><div id="chart-empty" hidden>该范围暂无数据</div></div><div id="marker-legend" class="marker-legend" hidden><label><input id="show-markers" type="checkbox" checked> 显示模型 R 点</label><span class="legend-N">● N</span><span class="legend-S">● S</span><span class="legend-V">● V</span><span id="marker-count"></span></div><div class="wave-footer"><span>纵轴：ADC 原始值</span><span>无效点与段边界断开显示 · 标记不改变原始数据</span></div></div>
+          <div class="history panel"><label for="position">历史位置</label><button id="wave-previous" class="button secondary" type="button" aria-label="向前一个波形窗口">← 前段</button><input id="position" type="range" min="0" max="1" value="1" step="1" aria-label="历史波形结束位置"><span id="position-label">—</span><button id="wave-next" class="button secondary" type="button" aria-label="向后一个波形窗口">后段 →</button></div>
           <div class="bottom-grid">
             <section class="panel delivery">
               <div class="panel-heading"><h2>上传与存储</h2><span id="upload-status" class="pill"></span></div>
@@ -93,6 +99,7 @@
           </div>
           <section id="beats-panel" class="panel beats-panel" hidden>
             <div class="panel-heading"><div><h2>心搏明细 <span id="beats-total" class="count"></span></h2><p class="muted">点击时间定位原始波形 · 每页 10 搏</p></div><span id="selected-beat" class="small muted" role="status"></span></div>
+            <div class="beat-actions"><label>分类<select id="beat-filter"><option value="all">全部心搏</option><option value="SV">S / V 类</option><option value="N">N 类</option><option value="S">S 类</option><option value="V">V 类</option><option value="review">需复核</option></select></label><button id="beat-previous" class="button secondary">上一心搏</button><button id="beat-next" class="button secondary">下一心搏</button></div><p id="beats-empty" hidden>此筛选条件下没有心搏；可切回“全部心搏”。</p>
             <div class="beat-table-scroll" tabindex="0" role="region" aria-label="心搏明细，可横向滚动">
               <table class="beat-table"><caption>时间按采样编号 / 360 换算；N、S、V 为模型分数，不是概率或准确率。</caption><thead><tr><th scope="col">采样时间</th><th scope="col">分类</th><th scope="col">N 分数</th><th scope="col">S 分数</th><th scope="col">V 分数</th><th scope="col">复核标记</th></tr></thead><tbody id="beats-body"></tbody></table>
             </div>
@@ -109,5 +116,6 @@
   <dialog id="admin-dialog" class="admin-dialog"><div class="panel-heading"><h2>账号管理</h2><button class="button secondary" onclick="this.closest('dialog').close()">关闭</button></div><p>每个账号仅查看分配给自己的记录。旧记录需明确指定归属。</p><div id="user-list"></div><form id="new-user-form"><label for="new-username">新账号（3–32 位字母、数字、横线或下划线）</label><input id="new-username" required maxlength="32" autocomplete="off" autocapitalize="none"><label for="new-password">初始密码（至少 10 个字符）</label><input id="new-password" type="password" required minlength="10" maxlength="128" autocomplete="new-password"><button type="submit" class="button primary">创建普通账号</button></form><p id="admin-error" class="form-error" role="alert"></p><h2>待分配记录</h2><div id="unassigned-list"></div></dialog>
   <dialog id="credentials"><form method="dialog"><h2>访问设置</h2><p>本机访问无需填写。连接已设置凭证的服务时，在此输入。</p><label for="token">访问凭证</label><input id="token" type="password" autocomplete="off"><div class="dialog-actions"><button class="button secondary" value="cancel">取消</button><button id="save-token" class="button primary" value="save">保存</button></div></form></dialog>
   <dialog id="password-dialog"><form id="password-form"><h2 id="password-title">修改密码</h2><p>密码修改后，该账号的原有登录全部失效，采集记录保留。</p><div id="current-password-field"><label for="current-password">旧密码</label><input id="current-password" type="password" maxlength="128" autocomplete="current-password" required></div><label for="replacement-password">新密码（10–128 个字符）</label><input id="replacement-password" type="password" minlength="10" maxlength="128" autocomplete="new-password" required><label for="confirm-password">再次输入新密码</label><input id="confirm-password" type="password" minlength="10" maxlength="128" autocomplete="new-password" required><p id="password-error" class="form-error" role="alert"></p><div class="dialog-actions"><button type="button" class="button secondary" onclick="this.closest('dialog').close();document.getElementById('password-form').reset()">取消</button><button id="password-submit" type="submit" class="button primary">确认修改</button></div></form></dialog>
+  <dialog id="desktop-download" aria-labelledby="desktop-download-title"><h2 id="desktop-download-title">把工作台放到电脑桌面</h2><p>Windows 10/11 · 免安装版 1.1.0</p><ol><li>下载并完整解压压缩包。</li><li>双击“心电工作台.exe”。</li><li>使用现有账号登录，查看自己的记录。</li></ol><a class="button primary" href="/downloads/ecg-workspace-windows.zip" download="心电工作台-Windows免安装.zip">↓ 下载 Windows 压缩包</a><p class="desktop-download-note">需要联网和 Edge 或 Chrome。无需 Python / Node.js，包内不含账号或采集数据。程序暂未签名，若系统限制运行，可直接使用当前网页。</p><a href="/downloads/ecg-workspace-windows.zip.sha256">查看 SHA256 校验</a><div class="dialog-actions"><button id="desktop-download-close" class="button secondary">关闭</button></div></dialog>
 </body>
 </html>

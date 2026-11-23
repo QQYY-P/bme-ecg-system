@@ -1,18 +1,20 @@
 'use strict';
 function clearAccount() {
+  if(typeof resetDesktop==='function')resetDesktop();
   clearDevices();
   renderMeasurement(null);
   state.epoch++; state.listEpoch++; state.generation++; state.analysisGeneration++;
   state.ready=false; state.user=null; state.csrf=''; state.sessions=[]; state.selected=null;
   state.wave=null; state.analysis=null; state.analyzing=null; state.views.clear(); state.page=0;
   state.busy=false; state.total=0; state.filters={}; state.analysisKey=''; state.tableKey='';
+  state.beatFilter='all';state.amplitude=1;
   $('sessions').replaceChildren(); $('beats-body').replaceChildren(); $('content').hidden=true;
   text('session-count','0'); text('records-page','1 / 1'); $('records-prev').disabled=true; $('records-next').disabled=true;
   $('model-result').hidden=true; $('user-list').replaceChildren(); $('unassigned-list').replaceChildren();
   for(const id of ['record-name','record-note','record-id','source','provenance-kind','samples','chunks','duration','valid',
     'device','capture-time','first-upload','received','source-status','provenance-note','clock-note','wave-origin',
     'model-name','model-message','beat-count','class-N','class-S','class-V','model-time','eligible-count',
-    'skipped-count','quality-reasons','position-label','selected-beat','account-name','model-status','upload-status']) text(id,'');
+    'skipped-count','quality-reasons','position-label','selected-beat','account-name','model-status','upload-status','beats-total','beats-page']) text(id,'');
   $('input-summary').hidden=true; $('beats-panel').hidden=true; $('marker-legend').hidden=true;
   $('skip-reasons').replaceChildren(); $('chart').width=$('chart').width;
   $('record-form').reset(); $('new-user-form').reset(); $('password-form').reset(); renderDevice(null); notice('');
@@ -22,6 +24,7 @@ function clearAccount() {
 function showLogin(message='') {
   clearAccount(); $('workspace-shell').hidden=true; $('login-panel').hidden=false;
   $('password').value=''; text('login-error',message);
+  $('login-submit').disabled=false;
 }
 function enterWorkspace(payload) {
   clearAccount(); state.user=payload?.user || null; state.csrf=payload?.csrf_token || ''; state.ready=true;
@@ -30,6 +33,7 @@ function enterWorkspace(payload) {
   $('change-password').hidden=!state.auth;
   $('manage-devices').hidden=!state.user?.is_admin;
   text('account-name',state.user ? state.user.username+' · 我的记录' : '本机工作台');
+  $('login-submit').disabled=false;connectionStatus();
   refresh();
 }
 function renderDevice(d) {
@@ -48,10 +52,10 @@ async function jsonRequest(path,method,body) {
   return response;
 }
 $('login-form').onsubmit=async event=>{
-  event.preventDefault(); $('login-submit').disabled=true; text('login-error','');
+  event.preventDefault(); const epoch=state.epoch; $('login-submit').disabled=true; text('login-error','');
   try {enterWorkspace(await jsonRequest('/api/auth/login','POST',{username:$('username').value,password:$('password').value}));}
-  catch(e) {text('login-error',e.message);}
-  finally {$('login-submit').disabled=false;}
+  catch(e) {if(epoch===state.epoch)text('login-error',e.message);}
+  finally {if(epoch===state.epoch)$('login-submit').disabled=false;}
 };
 $('logout').onclick=async()=>{
   try {await api('/api/auth/logout',{method:'POST'}); showLogin();}
@@ -138,14 +142,22 @@ $('new-user-form').onsubmit=async event=>{
     if(epoch!==state.epoch)return;$('new-user-form').reset();text('admin-error','账号已创建');await loadAdmin();
   } catch(e){if(epoch===state.epoch)text('admin-error',e.message);}
 };
+let initializeGeneration=0;
 async function initialize() {
+  const generation=++initializeGeneration,epoch=state.epoch;
+  $('login-submit').disabled=true;
   try {
-    const config=await (await api('/api/auth/config')).json();state.auth=config.enabled;
+    const config=await (await api('/api/auth/config')).json();if(generation!==initializeGeneration||epoch!==state.epoch)return;state.auth=config.enabled;
     if(state.auth) {
       state.token='';sessionStorage.removeItem('ecg-token');
-      try {enterWorkspace(await (await api('/api/auth/me')).json());}catch(e){showLogin();}
+      try {const payload=await (await api('/api/auth/me')).json();if(generation===initializeGeneration&&epoch===state.epoch)enterWorkspace(payload);}
+      catch(e){if(generation!==initializeGeneration||epoch!==state.epoch)return;if(e.status===401){showLogin();connectionStatus();}else throw e;}
     } else enterWorkspace();
-  } catch(e) {showLogin('服务暂时无法连接，请稍后刷新页面。');$('login-submit').disabled=true;}
+  } catch(e) {
+    if(generation!==initializeGeneration||epoch!==state.epoch)return;
+    showLogin('服务暂时无法连接，请点击上方“重新连接”。');$('login-submit').disabled=true;
+    connectionStatus(e.connection || connectionProblem(e));
+  }
 }
 let passwordTarget=null;
 function openPasswordEditor(user=null) {

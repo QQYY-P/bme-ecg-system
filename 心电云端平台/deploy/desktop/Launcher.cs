@@ -7,7 +7,7 @@ using System.Windows.Forms;
 [assembly: AssemblyTitle("心电工作台")]
 [assembly: AssemblyDescription("心电云端平台 HTTPS 桌面入口")]
 [assembly: AssemblyProduct("心电工作台")]
-[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.1.0.0")]
 
 internal static class Launcher
 {
