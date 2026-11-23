@@ -8,7 +8,7 @@ STM32 心电采集、树莓派显示与分析、云端记录平台的共同开�
 
 ## 应用下载
 
-**[下载 Windows 免安装版 ZIP](https://github.com/XiongBoT/bme-ecg-system/releases/download/desktop-v1.0.0/ecg-workbench-windows-portable.zip)** · [版本说明与校验文件](https://github.com/XiongBoT/bme-ecg-system/releases/tag/desktop-v1.0.0)
+**[下载 Windows 1.1.0 免安装版 ZIP](https://github.com/XiongBoT/bme-ecg-system/releases/download/desktop-v1.1.0/ecg-workspace-windows-1.1.0.zip)** · [版本说明与校验文件](https://github.com/XiongBoT/bme-ecg-system/releases/tag/desktop-v1.1.0)
 
 适用于 Windows 10/11。下载后右键选择“全部解压”，双击文件夹中的 **心电工作台.exe**，使用已有的心电云端账号登录。无需安装 Python 或 Node.js，需要联网；详细操作见 [使用说明](心电云端平台/deploy/desktop/使用说明.txt)。
 
@@ -20,9 +20,10 @@ STM32 心电采集、树莓派显示与分析、云端记录平台的共同开�
 
 ## 从这里开始
 
+- [更新日志：版本变化、发布与部署状态](CHANGELOG.md)
 - [成员入门与协作流程](CONTRIBUTING.md)
 - [接口约定与联调](docs/接口约定.md)
-- [任务与发布记录](docs/团队协作.md)
+- [团队协作与发布记录模板](docs/团队协作.md)
 - [初始版本与验证边界](docs/初始版本说明.md)
 - [Windows 免安装电脑端：使用与构建](心电云端平台/deploy/desktop/README.md)
 - [手机端与安卓安装包：下载、验证与边界](docs/手机端与安卓安装包.md)
