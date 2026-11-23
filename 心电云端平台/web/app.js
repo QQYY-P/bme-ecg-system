@@ -4,7 +4,7 @@ const state = {
   sessions: [], selected: null, follow: true, busy: false, wave: null,
   token: sessionStorage.getItem('ecg-token') || '', generation: 0, analysisGeneration: 0,
   analyzing: null, analysis: null, analysisKey: '', tableKey: '', views: new Map(), cloud: false,
-  auth: false, ready: false, user: null, csrf: '', epoch: 0, listEpoch: 0, page: 0, total: 0, filters: {},
+  auth: false, ready: false, user: null, csrf: '', epoch: 0, listEpoch: 0, page: 0, total: 0, filters: {}, listKey: '',
   beatFilter:'all', amplitude:1
 };
 const PAGE_SIZE = 10;
@@ -38,6 +38,10 @@ function connectionStatus(problem=null) {
 }
 function connectionProblem(error,status=0){
   return ECGConnection.describeFailure(error,status,typeof navigator==='undefined'||navigator.onLine!==false);
+}
+function detailFeedback(message = '', retry = false) {
+  text('detail-message', message); $('detail-feedback').hidden = !message;
+  $('detail-retry').hidden = !retry;
 }
 async function api(path, options = {}) {
   const epoch=state.epoch;
@@ -76,16 +80,27 @@ function selectSession(sid) {
   state.selected = sid; state.follow = true; state.generation++; state.analysisGeneration++;
   state.wave = null; state.analysis = null; state.analysisKey = ''; state.tableKey = '';
   $('content').hidden=true; $('chart').width=$('chart').width;
+  $('detail-retry').disabled=false;
+  detailFeedback(sid ? '正在读取测量结果…' : '');
+  if (typeof MobileUI !== 'undefined') MobileUI.selectionChanged();
   renderAnalysis({session_id:sid, analysis_status:'loading', message:'正在读取此记录的模型状态'});
   draw();
 }
 function renderList() {
+  const key = JSON.stringify([state.selected, state.total, state.filters, state.sessions, state.sessions.map(uploadLabel)]);
+  if (key === state.listKey) return;
+  state.listKey = key;
+  const focused = document.activeElement?.dataset?.sessionId;
   const parent = $('sessions'); parent.replaceChildren(); text('session-count', state.total);
   if (!state.sessions.length) {
-    const p=document.createElement('p'); p.className='empty-hint'; p.textContent='暂无记录，等待上传'; parent.append(p); return;
+    const p=document.createElement('p'); p.className='empty-hint';
+    const filtered = Object.entries(state.filters).some(([k,v]) => v && !(k === 'trashed' && v === 'false'));
+    p.textContent = filtered ? '没有符合条件的记录。可展开“搜索与筛选”，重置条件后再试。' : '还没有测量记录。在树莓派选择本人账号，完成测量后点击“上传并分析”，再刷新这里。';
+    parent.append(p); return;
   }
   for (const s of state.sessions) {
     const button=document.createElement('button'); button.className='session'+(s.session_id===state.selected?' active':'');
+    button.dataset.sessionId = s.session_id;
     button.setAttribute('aria-pressed', String(s.session_id===state.selected));
     const title=document.createElement('span'); title.className='session-title'; title.textContent=s.name || sources[s.source] || '来源未知';
     const tag=document.createElement('span'); tag.className='session-kind'; tag.textContent=kinds[s.provenance?.kind] || kinds.unknown;
@@ -94,7 +109,12 @@ function renderList() {
     const n=document.createElement('span'); n.textContent=count(s.sample_count)+' 点';
     const status=document.createElement('span'); status.className='session-status'; status.textContent=uploadLabel(s);
     data.append(n,status); button.append(title,tag,sub,data);
-    button.onclick=()=>{selectSession(s.session_id);renderList();loadWave();loadAnalysis();}; parent.append(button);
+    button.onclick=()=>{
+      selectSession(s.session_id);renderList();
+      if (typeof MobileUI === 'undefined' || !MobileUI.openResult()) {loadWave();loadAnalysis();}
+    };
+    parent.append(button);
+    if (focused === s.session_id) button.focus({preventScroll:true});
   }
 }
 async function refresh() {
@@ -115,7 +135,7 @@ async function refresh() {
     if(!state.sessions.some(s=>s.session_id===state.selected)) selectSession(state.sessions[0]?.session_id || null);
     renderList(); $('empty').hidden=!!state.selected; $('content').hidden=!state.selected || state.wave?.session?.session_id!==state.selected;
     connectionStatus(); notice('');
-    if(state.selected) await Promise.all([loadWave(),loadAnalysis()]);
+    if(state.selected && (typeof MobileUI === 'undefined' || MobileUI.needsDetail())) await Promise.all([loadWave(),loadAnalysis()]);
   } catch(error) {
     if(epoch!==state.epoch || listEpoch!==state.listEpoch) return;
     text('service','● 连接中断'); $('service').classList.add('off');
@@ -262,7 +282,7 @@ async function loadWave() {
   try {
     const wave=await (await api('/api/sessions/'+encodeURIComponent(sid)+'/waveform?'+params)).json();
     if(sid!==state.selected || generation!==state.generation) return;
-    state.wave=wave; const s=wave.session; $('content').hidden=false;
+    state.wave=wave; const s=wave.session; $('content').hidden=false; detailFeedback();
     text('record-name',s.name || '采集会话');text('record-note',s.note || '');text('record-id',s.session_id);text('source',sources[s.source] || '来源未知');
     text('trash-record',s.trashed_at?'恢复记录':'移入回收站');
     $('source').className='pill'+(s.source==='demo'?' warning':'');
@@ -271,7 +291,7 @@ async function loadWave() {
     text('valid',s.sample_count?(s.valid_count/s.sample_count*100).toFixed(1)+'%':'—');
     text('device',s.device_id);renderProvenance(s);renderMeasurement(s);
     text('source-status',({recording:'采集中',complete:'正常结束',incomplete:'未完整结束',recovered_incomplete:'中断后恢复',failed:'源记录异常',error:'源记录异常'})[s.source_status] || s.source_status);
-    text('download',s.upload_status==='complete'?'↓ 下载完整 CSV':'↓ 下载已接收 CSV');
+    text('download',s.upload_status==='complete'?'下载完整 CSV':'下载已接收 CSV');
     text('upload-status',uploadLabel(s));$('upload-status').className='pill'+(uploadLabel(s)==='等待上传'?' warning':'');
     const modes=new Set(wave.points.map(p=>p[4]));
     let origin=sources[s.source];
@@ -285,7 +305,11 @@ async function loadWave() {
     const hasValid=wave.points.some(p=>p[1]!==null);
     text('chart-empty',wave.points.length?'当前窗口均为无效采样，数据已保存':'该范围暂无数据');
     $('chart-empty').hidden=hasValid;draw();
-  } catch(error) {if(sid===state.selected && generation===state.generation)notice('波形读取失败：'+error.message);}
+  } catch(error) {
+    if(sid===state.selected && generation===state.generation) {
+      detailFeedback((state.wave ? '更新失败，以下保留上次读取的结果。' : '测量结果暂时无法读取。') + '请检查网络后重试。' + error.message, true);
+    }
+  }
 }
 function visibleMarkers(points, start, end) {
   const rows=new Map(points.filter(p=>p[1]!==null).map(p=>[p[0],p]));
@@ -339,6 +363,12 @@ function draw() {
   c.restore();
 }
 $('refresh').onclick=refresh;
+$('detail-retry').onclick=async()=>{
+  const epoch=state.epoch, sid=state.selected;
+  $('detail-retry').disabled=true; detailFeedback('正在重新读取测量结果…');
+  try {await Promise.all([loadWave(),loadAnalysis()]);}
+  finally {if(epoch===state.epoch && sid===state.selected)$('detail-retry').disabled=false;}
+};
 $('analyze').onclick=async()=>{
   const sid=state.selected, epoch=state.epoch;if(!sid || state.analyzing)return;
   state.analyzing=sid;state.analysisGeneration++;
@@ -358,7 +388,12 @@ $('position').oninput=()=>{state.follow=false;clearTimeout(sliderTimer);sliderTi
 $('settings').onclick=()=>{$('token').value=state.token;$('credentials').showModal();};
 $('save-token').onclick=()=>{state.token=$('token').value.trim();sessionStorage.setItem('ecg-token',state.token);refresh();};
 $('download').onclick=async()=>{
-  const sid=state.selected,epoch=state.epoch;if(!sid)return;$('download').disabled=true;
+  const sid=state.selected,epoch=state.epoch;if(!sid)return;
+  if(document.documentElement?.dataset?.nativeApp==='android') {
+    location.href='ecg-export://download/'+encodeURIComponent(sid)+'?user='+encodeURIComponent(state.user?.id || '');
+    return;
+  }
+  $('download').disabled=true;
   try {
     const response=await api('/api/sessions/'+encodeURIComponent(sid)+'/export');
     const blob=await response.blob();if(epoch!==state.epoch)return;

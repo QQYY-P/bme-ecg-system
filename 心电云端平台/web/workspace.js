@@ -6,7 +6,10 @@ function clearAccount() {
   state.epoch++; state.listEpoch++; state.generation++; state.analysisGeneration++;
   state.ready=false; state.user=null; state.csrf=''; state.sessions=[]; state.selected=null;
   state.wave=null; state.analysis=null; state.analyzing=null; state.views.clear(); state.page=0;
-  state.busy=false; state.total=0; state.filters={}; state.analysisKey=''; state.tableKey='';
+  state.busy=false; state.total=0; state.filters={}; state.analysisKey=''; state.tableKey=''; state.listKey='';
+  detailFeedback(); $('detail-retry').disabled=false;
+  text('filter-error',''); $('filter-error').hidden=true;
+  if (typeof MobileUI !== 'undefined') MobileUI.reset();
   state.beatFilter='all';state.amplitude=1;
   $('sessions').replaceChildren(); $('beats-body').replaceChildren(); $('content').hidden=true;
   text('session-count','0'); text('records-page','1 / 1'); $('records-prev').disabled=true; $('records-next').disabled=true;
@@ -64,14 +67,24 @@ $('logout').onclick=async()=>{
 function reloadList() {state.listEpoch++; state.busy=false; state.generation++; state.analysisGeneration++; refresh();}
 $('filters').onsubmit=event=>{
   event.preventDefault(); const params={trashed:$('trash-filter').value};
+  text('filter-error',''); $('filter-error').hidden=true;
+  if ($('date-from').value && $('date-to').value && $('date-from').value > $('date-to').value) {
+    text('filter-error','开始日期不能晚于结束日期。'); $('filter-error').hidden=false; return;
+  }
   if($('query').value.trim()) params.q=$('query').value.trim();
   if($('filter-source').value) params.source=$('filter-source').value;
   if($('filter-device').value) params.device_id=$('filter-device').value;
   if($('date-from').value) params.started_from=new Date($('date-from').value+'T00:00:00').toISOString();
   if($('date-to').value) {const d=new Date($('date-to').value+'T00:00:00');d.setDate(d.getDate()+1);params.started_before=d.toISOString();}
-  state.filters=params; state.page=0; reloadList();
+  state.filters=params; state.page=0;
+  if (typeof MobileUI !== 'undefined') MobileUI.filtersChanged();
+  reloadList();
 };
-$('reset-filters').onclick=()=>{$('filters').reset();state.filters={};state.page=0;reloadList();};
+$('reset-filters').onclick=()=>{
+  $('filters').reset();state.filters={};state.page=0; text('filter-error','');$('filter-error').hidden=true;
+  if (typeof MobileUI !== 'undefined') MobileUI.filtersChanged();
+  reloadList();
+};
 $('records-prev').onclick=()=>{state.page=Math.max(0,state.page-1);reloadList();};
 $('records-next').onclick=()=>{state.page++;reloadList();};
 let editSession=null;
