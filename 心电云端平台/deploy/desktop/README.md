@@ -25,4 +25,4 @@ python -m unittest discover -s tests -p test_desktop_package.py -v
 
 部署：源码包由 `deploy/package_cloud.py` 构建；生成的桌面 ZIP 与外置校验文件需单独放在服务器 `ecg-cloud/deploy/dist/desktop/`。公开下载路由只接受两个固定文件名，不公开目录、凭据或记录。`deploy/linux/update_desktop.py` 校验更新清单，停服备份数据，切换源码，检查模型/身份保护/下载/原始数据后启动；它用于既有 ubuntu 服务，不执行初始账号创建。内部虚拟环境随旧应用保留，外部环境沿用原路径。失败时恢复代码并保留当前数据，避免覆盖新的上传。这是正式升级流程；本轮 1.2 只提供试用包，不执行部署。
 
-1.0 源码通过 `feat/ecg-desktop-portable` 同步，已发布 1.1.0 通过 `feat/ecg-desktop-workspace-110` 合入；1.2 连接助手使用 `feat/windows-workspace`。构建生成的 ZIP/EXE、记录和凭据不进入 Git。项目进度、验收证据、交付包摘要和后续事项统一见 [云端工作台迭代](../../云端工作台迭代.md) 的“Windows 免安装电脑端”小节。
+1.0 源码通过 `feat/ecg-desktop-portable` 同步，已发布 1.1.0 通过 `feat/ecg-desktop-workspace-110` 合入；1.2 连接助手使用 `feat/windows-workspace`。构建生成的 ZIP/EXE、记录和凭据不进入 Git。项目进度、验收证据、交付包摘要和后续事项统一见 [云端工作台迭代](../../docs/云端工作台迭代.md) 的“Windows 免安装电脑端”小节。

@@ -6,7 +6,7 @@
 到时停止并保存，显示本次测量总结；历史记录可再次打开总结、导出中文 PDF、手动上传和手机查看。
 质量通过时间逐点累计，心率只统计有效实采 RR 间期；模拟、无有效信号或保存异常不生成可靠心率结论。
 新增 PDF 依赖：Raspberry Pi OS 安装 python3-reportlab fonts-wqy-microhei。
-使用方式见 docs/设备待机与日常使用.md；统一进度见相邻云端工程的 云端工作台迭代.md。
+使用方式见 docs/设备待机与日常使用.md；统一进度见../心电云端平台/docs/云端工作台迭代.md。
 最新部署准备包为 dist/ecg-cloud-workspace.tar.gz，需与对应云端版本一起升级。
 
 2026-11-23 设备待机与日常使用（本地完成，待板上验收）
@@ -241,7 +241,7 @@ Pi 2 虚拟显示下另完成 180 秒模拟：接收、保存与导出 CSV 均�
 实体按键切换过程、三分钟实采及长期运行仍须实际板测。记录见evidence/17_status_quality_20261027/。
 三分类研究模块已在 2026-10-28 接入；HRV/LF-HF、云端、移动 App 和临床性能验证仍未完成。
 旧模型来源、三模型权重和许可仍在 models/manifest.json 与 models/LICENSE.txt。
-课程要求及整体后续规划见《课程报告要求与实现步骤.txt》与《第二阶段实施方案_Pi2_现有三分类.txt》。
+课程要求及整体后续规划见《docs/课程报告要求与实现步骤.txt》与《docs/第二阶段实施方案_Pi2_现有三分类.txt》。
 
 系统安装参考：
 https://packages.debian.org/stable/python/python3-tk
