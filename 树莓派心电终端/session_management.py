@@ -161,13 +161,16 @@ def _move(data_dir, sid, *, restore):
     root = _root(data_dir)
     with _management_lock(root):
         source = _directory(root, sid, trashed=restore)
-        list(_files(source))
         parent = _plain_path(root / ("sessions" if restore else "trash"))
         target = _plain_path(parent / sid)
         if target.exists():
             raise ValueError("目标位置已存在同名会话，未覆盖任何数据")
+        _plain_path(source / "writer.lock")
         lock = _SessionLock(source)
         try:
+            # Reject a live recorder before scanning its atomically replaced
+            # checkpoint files; keep link checks before opening the lock.
+            list(_files(source))
             parent.mkdir(exist_ok=True)
             # Windows cannot rename a directory containing an open lock file.
             # The directory-wide mutex remains held across close and rename.

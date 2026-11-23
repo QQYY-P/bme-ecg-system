@@ -23,6 +23,7 @@
 **/.test_runs/
 **/node_modules/
 **/work/
+**/outputs/
 **/evidence/
 **/dist/
 **/logs/
