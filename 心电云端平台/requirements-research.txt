@@ -1,0 +1,3 @@
+# Offline MIT-BIH evaluation only; not needed by the web server.
+-r requirements-model.txt
+wfdb==4.3.1

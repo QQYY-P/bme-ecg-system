@@ -5,6 +5,15 @@ Windows 免安装电脑端：解压后双击“心电工作台.exe”，连接�
 
 多设备云端主平台：本地已加入独立设备凭据、授权用户、启停及凭据轮换、按设备筛选和手机/电脑设备管理页。管理员从工作台进入“设备管理”；树莓派可通过 ECG_CLOUD_URL 直连现有 HTTPS 云端。接入步骤、兼容策略、测试证据与包版本状态统一见 云端工作台迭代.md 的“云端主平台与多设备接入”小节。本机验收不代表已上线。
 
+QRS/RR、HRV和性能评估：已分享的报告在仓库 docs/algorithm-validation/report.html，数值在同目录 report.json；本地重新运行默认输出到 outputs/qrs-hrv-evaluation/，该目录不加入Git。使用MIT-BIH 10条记录各前5分钟，不修改原始数据或模型；不是全库、树莓派或临床验证。NN统计额外要求明确窦性节律；手机工作台尚未新增HRV卡片。复跑命令与详细边界见 云端工作台迭代.md 对应小节。
+
+克隆后的离线实验（PowerShell，先在仓库根目录按根README创建.venv）：
+  .\.venv\Scripts\python.exe -m pip install -r "心电云端平台/requirements-research.txt"
+从 https://physionet.org/content/mitdb/1.0.0/ 获取公开MIT-BIH记录，将对应.hea、.dat、.atr放在仓库外的数据目录，不提交到Git。
+进入“心电云端平台”目录后执行，下例替换数据路径：
+  ..\.venv\Scripts\python.exe -m research.evaluate_ecg --data "D:\datasets\mitdb" --records 100 101 103 105 200 201 207 208 231 232 --seconds 300
+输出HTML与JSON包含配置、算法及输入文件摘要、匹配数、RR/NN统计和本机耗时。生成报告不会读取服务器账号或真实采集记录。只运行单元测试不需要WFDB或MIT-BIH数据。
+
 手机桌面应用（PWA）：本地代码已增加安装入口、图标、独立窗口、离线连接提示和主动更新。沿用已有账号；无 APK，不离线保存心电记录。本轮是否上线以 云端工作台迭代.md 的 PWA 小节为准；手机安装方法见 deploy/linux/手机公网访问说明.txt。
 
 本轮本地完成、尚未上线：采集引导与定时总结衔接、手机查看终端统计、本人修改密码、管理员重置及停用普通账号。部署包已更新，升级与验证进度统一见 云端工作台迭代.md。

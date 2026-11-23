@@ -189,6 +189,21 @@ class SessionManagementTests(unittest.TestCase):
                     operation()
         self.assertTrue(recorder.path.is_dir())
 
+    def test_active_trash_rejects_before_scanning_changing_checkpoint_files(self):
+        recorder=self.recorder(finish=False)
+        with patch.object(management,'_files',side_effect=AssertionError('active checkpoint scan')):
+            with self.assertRaisesRegex(RuntimeError,'仍在使用'):
+                management.trash_session(self.root,'test-session')
+        self.assertTrue(recorder.path.is_dir())
+
+    def test_trash_rejects_a_linked_writer_lock_before_opening_it(self):
+        self.recorder()
+        original=Path.is_symlink
+        def linked(path):return path.name=='writer.lock' or original(path)
+        with patch.object(Path,'is_symlink',linked),patch.object(management,'_SessionLock',side_effect=AssertionError('linked lock opened')):
+            with self.assertRaisesRegex(ValueError,'符号链接'):
+                management.trash_session(self.root,'test-session')
+
     def test_corrupt_history_remains_visible_and_can_be_trashed(self):
         recorder = self.recorder()
         (recorder.path / "session.json").write_text("not json", encoding="utf-8")
