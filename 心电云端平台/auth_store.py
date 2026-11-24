@@ -34,6 +34,9 @@ class AuthStore:
                 user_id TEXT NOT NULL REFERENCES users(id), csrf TEXT NOT NULL, expires REAL NOT NULL);
             CREATE TABLE IF NOT EXISTS device_keys(token_hash TEXT PRIMARY KEY, device_id TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS login_attempts(bucket TEXT PRIMARY KEY, started REAL NOT NULL, failures INTEGER NOT NULL);
+            CREATE TABLE IF NOT EXISTS user_activity(user_id TEXT PRIMARY KEY REFERENCES users(id),
+                created_at REAL, last_login_at REAL);
+            CREATE INDEX IF NOT EXISTS browser_sessions_user_expiry ON browser_sessions(user_id, expires);
             ''')
         self.dummy_hash = password_hash('not-an-account-password')
 
@@ -45,6 +48,16 @@ class AuthStore:
         with closing(self.connect()) as db:
             return [self.public(row) for row in db.execute('SELECT * FROM users ORDER BY username')]
 
+    def admin_users(self):
+        """Administrative metadata only; never used for device recipient lists."""
+        with closing(self.connect()) as db:
+            rows = db.execute('''SELECT u.*, a.created_at, a.last_login_at,
+                (SELECT COUNT(*) FROM browser_sessions s
+                 WHERE s.user_id=u.id AND s.expires>? AND u.active=1) AS active_sessions
+                FROM users u LEFT JOIN user_activity a ON a.user_id=u.id ORDER BY u.username''', (time.time(),))
+            return [dict(self.public(row), created_at=row['created_at'], last_login_at=row['last_login_at'],
+                         active_sessions=row['active_sessions']) for row in rows]
+
     def create_user(self, username, password, admin=False):
         username = username.strip().lower()
         if not re.fullmatch(r'[a-z0-9][a-z0-9_-]{2,31}', username):
@@ -53,10 +66,12 @@ class AuthStore:
             raise ValueError('密码须为 10–128 个字符')
         encoded = password_hash(password)
         with closing(self.connect()) as db, db:
+            db.execute('BEGIN IMMEDIATE')
             if db.execute('SELECT 1 FROM users WHERE username=?', (username,)).fetchone():
                 raise ValueError('账号已存在')
             uid = uuid.uuid4().hex
             db.execute('INSERT INTO users VALUES(?,?,?,?,1)', (uid, username, encoded, int(admin)))
+            db.execute('INSERT INTO user_activity(user_id,created_at) VALUES(?,?)', (uid, time.time()))
             return self.public(db.execute('SELECT * FROM users WHERE id=?', (uid,)).fetchone())
 
     def create_device_key(self, device_id):
@@ -93,17 +108,31 @@ class AuthStore:
             db.execute('DELETE FROM browser_sessions WHERE user_id=?', (uid,))
             db.execute('DELETE FROM login_attempts WHERE bucket=?', (bucket,))
 
+    @staticmethod
+    def managed_user(db, uid):
+        row = db.execute('SELECT * FROM users WHERE id=?', (uid,)).fetchone()
+        if not row:
+            raise HTTPException(404, '账号不存在')
+        if row['is_admin']:
+            raise HTTPException(409, '此处仅管理普通账号；管理员请使用本人修改密码')
+        return row
+
+    def revoke_user_sessions(self, uid):
+        with closing(self.connect()) as db, db:
+            db.execute('BEGIN IMMEDIATE')
+            self.managed_user(db, uid)
+            count = db.execute('SELECT COUNT(*) FROM browser_sessions WHERE user_id=? AND expires>?',
+                               (uid, time.time())).fetchone()[0]
+            db.execute('DELETE FROM browser_sessions WHERE user_id=?', (uid,))
+            return {'revoked_sessions': count}
+
     def manage_user(self, uid, *, active=None, new_password=None):
         if new_password is not None and not 10 <= len(new_password) <= 128:
             raise HTTPException(422, '密码须为 10–128 个字符')
         encoded = password_hash(new_password) if new_password is not None else None
         with closing(self.connect()) as db, db:
             db.execute('BEGIN IMMEDIATE')
-            row = db.execute('SELECT * FROM users WHERE id=?', (uid,)).fetchone()
-            if not row:
-                raise HTTPException(404, '账号不存在')
-            if row['is_admin']:
-                raise HTTPException(409, '此处仅管理普通账号；管理员请使用本人修改密码')
+            self.managed_user(db, uid)
             if active is not None:
                 db.execute('UPDATE users SET active=? WHERE id=?', (int(active), uid))
             if encoded is not None:
@@ -140,6 +169,8 @@ class AuthStore:
             db.execute('DELETE FROM login_attempts WHERE bucket=?', ('user:' + username,))
             db.execute('DELETE FROM browser_sessions WHERE expires<?', (now,))
             db.execute('INSERT INTO browser_sessions VALUES(?,?,?,?)', (digest(token), row['id'], csrf, now+SESSION_SECONDS))
+            db.execute('''INSERT INTO user_activity(user_id,last_login_at) VALUES(?,?)
+                ON CONFLICT(user_id) DO UPDATE SET last_login_at=excluded.last_login_at''', (row['id'], time.time()))
         return token, dict(user=self.public(row), csrf_token=csrf)
 
     def authenticate(self, request):

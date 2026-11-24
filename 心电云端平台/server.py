@@ -292,7 +292,12 @@ def create_app(data_dir=None, token=None, device_id=None, auth_enabled=None, coo
     @app.get('/api/admin/users')
     def users():
         require_admin()
-        return {'users': auth.users()}
+        return {'users': auth.admin_users()}
+
+    @app.post('/api/admin/users/{user_id}/revoke-sessions')
+    def revoke_user_sessions(user_id: str):
+        require_admin()
+        return auth.revoke_user_sessions(user_id)
 
     @app.post('/api/auth/password')
     def change_password(payload: ChangePasswordInput):
