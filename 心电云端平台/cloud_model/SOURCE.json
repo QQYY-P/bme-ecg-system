@@ -1,5 +1,5 @@
 {
-  "source_directory": "D:\\课程\\1.生物医学工程综合\\树莓派心电终端",
+  "source_directory": "树莓派心电终端",
   "model": "CardioEdgeAI v1 INT8",
   "upstream_commit": "ec36bbc5f96ea42a93274c499a51e3678742ffcf",
   "weights_sha256": "1398ea833ff65c90d63ed3174722c9280fa6606ab2c165bfa7c53ca8fe264a41",
@@ -86,5 +86,6 @@
       "cloud_sha256": "e36ab7b80787f3c9b6551a15bf64340a5a39909200cba6a1e0fd824057656fcf",
       "changes": {}
     }
-  ]
+  ],
+  "source_directory_base": "repository_root"
 }
