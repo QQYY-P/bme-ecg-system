@@ -182,8 +182,8 @@ class AnalysisQueue:
             row = db.execute("SELECT * FROM analysis_jobs WHERE session_id=? AND kind=? AND status IN ('queued','running')", (sid,kind)).fetchone()
             if row: return dict(row)
             if cached and not force:
-                row = db.execute("SELECT * FROM analysis_jobs WHERE session_id=? AND kind=? AND source_digest=? AND status IN ('complete','ineligible') ORDER BY created DESC LIMIT 1", (sid,kind,digest)).fetchone()
-                if row: return dict(row)
+                row = db.execute("SELECT * FROM analysis_jobs WHERE session_id=? AND kind=? AND source_digest=? ORDER BY created DESC,job_id DESC LIMIT 1", (sid,kind,digest)).fetchone()
+                if row and row['status'] in ('complete','ineligible'): return dict(row)
             if db.execute("SELECT COUNT(*) FROM analysis_jobs WHERE status IN ('queued','running')").fetchone()[0] >= 64:
                 raise QueueFull('分析队列已满，请稍后提交')
             jid, stamp = uuid.uuid4().hex, time.time()

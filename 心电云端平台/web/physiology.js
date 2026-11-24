@@ -5,7 +5,7 @@
   'use strict';
   function create({element,context,request}){
     let generation=0,pending=false,current=null;
-    const ids=['qrs-count','rr-mean','rr-heart-rate','qrs-quality','rr-sd','rr-rmssd'];
+    const ids=['qrs-count','rr-mean','rr-heart-rate','qrs-quality','rr-sd','rr-rmssd','qrs-effective'];
     const text=(id,value)=>element(id).textContent=value;
     const number=(value,suffix='')=>Number.isFinite(value)?value.toFixed(1)+suffix:'—';
     function updateAvailability(){
@@ -17,6 +17,7 @@
     function resetMetrics(){
       for(const id of ids)text(id,'—');
       element('physiology-metrics').hidden=true;text('hrv-message','');
+      text('qrs-coverage-note','');text('qrs-reasons','');
     }
     function clear(){
       generation++;pending=false;current=null;resetMetrics();
@@ -38,6 +39,17 @@
         text('rr-mean',number(rr.mean_ms,' ms'));text('rr-heart-rate',number(rr.mean_rate_bpm,' 次/分'));
         text('qrs-quality',Number.isFinite(summary.quality_coverage)?number(summary.quality_coverage*100,'%'):'—');
         text('rr-sd',number(rr.sdrr_ms,' ms'));text('rr-rmssd',number(rr.rmssd_ms,' ms'));
+        text('qrs-effective',Number.isFinite(summary.quality_allowed_samples)?number(summary.quality_allowed_samples/360,' 秒'):'—');
+        const whole=value=>Number.isFinite(value)?String(value):'—';
+        text('qrs-coverage-note','质量门控通过 '+whole(summary.quality_allowed_samples)+' / 共 '+whole(summary.sample_count)+' 点；对应时长不包含断流等待。');
+        const labels={source_not_real:'非实采或来源未知',board_simulated:'板端模拟',mode_unknown:'采集模式未知',invalid_adc:'无效或饱和 ADC'};
+        const reasons=Object.entries(summary.skipped_reasons || {}).filter(([,value])=>value>0)
+          .map(([key,value])=>(labels[key] || '其他跳过原因')+' '+value+' 点');
+        if(Number.isFinite(summary.eligible_samples) && Number.isFinite(summary.quality_allowed_samples)
+          && summary.eligible_samples>summary.quality_allowed_samples)
+          reasons.push('连续长度不足或质量未通过 '+(summary.eligible_samples-summary.quality_allowed_samples)+' 点');
+        if(!summary.sample_count)reasons.push('尚无可分析的采样点');
+        text('qrs-reasons',reasons.length?'未参与分析：'+reasons.join('；')+'。':'');
         text('hrv-message','HRV 暂不可用：'+(result.hrv?.message || '尚无可信的正常窦性间期标记。'));
       }
       text('physiology-version',result.algorithm_version?'分析版本：'+result.algorithm_version:'');

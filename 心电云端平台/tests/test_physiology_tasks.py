@@ -141,6 +141,20 @@ class PhysiologyTaskTests(unittest.TestCase):
         self.assertNotIn('rr', result)
         self.assertFalse(list((self.data/'physiology').rglob('*.json')))
 
+    def test_failed_forced_run_does_not_make_ordinary_retry_reuse_old_success(self):
+        first = self.wait_for(self.enqueue())
+        self.assertEqual(first['status'], 'complete')
+        with patch.object(self.app.state.jobs, 'start'):
+            forced = self.client.post('/api/sessions/record/physiology-jobs?force=true').json()
+            with closing(sqlite3.connect(self.data/'cloud.sqlite')) as db, db:
+                db.execute("UPDATE analysis_jobs SET status='failed',error='interrupted retry' WHERE job_id=?", (forced['job_id'],))
+            self.assertEqual(self.client.get('/api/sessions/record/physiology').json()['analysis_status'], 'failed')
+            retried = self.enqueue()
+            self.assertNotIn(retried['job_id'], (first['job_id'], forced['job_id']))
+            self.assertEqual(self.client.get('/api/sessions/record/physiology').json()['analysis_status'], 'queued')
+        self.app.state.jobs.start()
+        self.assertEqual(self.wait_for(retried)['status'], 'complete')
+
     def test_old_database_migrates_existing_jobs_to_model(self):
         with closing(sqlite3.connect(self.data/'cloud.sqlite')) as db, db:
             db.execute('DROP TABLE analysis_jobs')

@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
@@ -31,6 +32,38 @@ class PhysiologyAnalysisTests(unittest.TestCase):
         digest = self.service.digest(metadata, True, [{'sha256': name, 'sample_count': len(rows)}])
         batches = (({}, rows[i:i+chunk_size]) for i in range(0, len(rows), chunk_size))
         return self.service.run(name, metadata, True, len(rows), digest, batches)
+
+    def test_large_sample_ids_preserve_integer_interval_precision(self):
+        start = 2**60
+        ordinary = self.analyze(self.rows(8), name='ordinary')
+        shifted = self.analyze(self.rows(8, start=start), name='shifted')
+        self.assertEqual(ordinary['rr'], shifted['rr'])
+        self.assertTrue(all(p['sample_id'] >= start for p in shifted['r_peaks']))
+        self.assertTrue(all(item['rr_ms'] == 1000 for item in shifted['rr_intervals'] if item['accepted']))
+        stats = self.service.statistics([360,720,start+360,start+720,start+1080], segments=[0,0,1,1,1])
+        self.assertEqual(stats['rr']['mean_ms'], 1000)
+        self.assertEqual(stats['rr']['rmssd_ms'], 0)
+
+    def test_malformed_json_cache_remains_recoverable(self):
+        digest = 'd'*64
+        path = self.service.path('broken', digest)
+        path.parent.mkdir(parents=True)
+        for payload in ('[]', 'null', '"text"'):
+            path.write_text(payload, encoding='utf-8')
+            result = self.service.read('broken', digest)
+            self.assertEqual(result['analysis_status'], 'failed')
+            self.assertTrue(result['available'])
+
+    def test_fragmented_runs_below_quality_window_do_not_initialize_detectors(self):
+        rows = self.rows(2)[:12]
+        fragmented = [(row[0]*2, *row[1:]) for row in rows]
+        with patch.object(self.service, 'detect', wraps=self.service.detect) as detect:
+            result = self.analyze(fragmented)
+        self.assertEqual(result['analysis_status'], 'ineligible')
+        self.assertEqual(result['summary']['eligible_samples'], len(rows))
+        self.assertEqual(result['summary']['quality_allowed_samples'], 0)
+        self.assertEqual(result['r_peaks'], [])
+        detect.assert_not_called()
 
     def test_complete_peaks_are_chunk_independent_and_hrv_is_not_inferred(self):
         rows = self.rows()

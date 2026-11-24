@@ -112,12 +112,14 @@
             <div class="physiology-body">
               <p id="physiology-message" role="status"></p>
               <div id="physiology-metrics" hidden>
+                <p>有效数据时长 <strong id="qrs-effective">—</strong></p>
+                <p id="qrs-coverage-note" class="physiology-caption"></p>
                 <dl class="physiology-grid">
                   <div><dt>检测到的 R 峰</dt><dd id="qrs-count">—</dd></div><div><dt>平均 RR 间期</dt><dd id="rr-mean">—</dd></div>
                   <div><dt>RR 换算平均心率</dt><dd id="rr-heart-rate">—</dd></div><div><dt>质量门控通过比例</dt><dd id="qrs-quality">—</dd></div>
                   <div><dt>RR 标准差（SDRR）</dt><dd id="rr-sd">—</dd></div><div><dt>相邻 RR 均方根差</dt><dd id="rr-rmssd">—</dd></div>
                 </dl>
-                <p id="hrv-message"></p>
+                <p id="qrs-reasons" class="physiology-caption"></p><p id="hrv-message"></p>
               </div>
               <button id="physiology-analyze" class="button primary" disabled>开始 QRS/RR 分析</button>
               <p class="physiology-caption">仅分析已上传完成的有效实采片段；断流与低质量片段之间不拼接 RR。RR 变异性不能直接视为基于正常窦性间期的 HRV。</p>

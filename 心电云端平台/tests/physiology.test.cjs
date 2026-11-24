@@ -19,6 +19,19 @@ test('shows RR metrics separately from unavailable HRV and preserves unknowns',a
   h.request=async()=>({json:async()=>result({analysis_status:'ineligible',summary:{qrs_count:0,quality_coverage:null},rr:{mean_ms:null}})});
   await h.ui.load();assert.equal(h.element('rr-mean').textContent,'—');assert.equal(h.element('qrs-quality').textContent,'—');
 });
+test('shows effective data duration and explains unavailable input causes',async()=>{
+  const h=harness();h.request=async()=>({json:async()=>result({analysis_status:'ineligible',
+    summary:{sample_count:7200,eligible_samples:3600,quality_allowed_samples:1800,quality_coverage:.25,
+      qrs_count:0,skipped_reasons:{board_simulated:3600}}})});
+  await h.ui.load();assert.match(h.element('qrs-effective').textContent,/5.0 秒/);
+  assert.match(h.element('qrs-coverage-note').textContent,/1800.*7200/);
+  assert.match(h.element('qrs-reasons').textContent,/板端模拟.*3600/);
+  h.request=async()=>({json:async()=>result({analysis_status:'ineligible',summary:{sample_count:360,eligible_samples:360,
+    quality_allowed_samples:0,quality_coverage:0,qrs_count:0,skipped_reasons:{}}})});
+  await h.ui.load();assert.match(h.element('qrs-effective').textContent,/0.0 秒/);
+  assert.match(h.element('qrs-reasons').textContent,/质量|连续/);
+  h.ui.clear();assert.equal(h.element('qrs-effective').textContent,'—');assert.equal(h.element('qrs-reasons').textContent,'');
+});
 test('clears metrics while queued and reports durable task progress',async()=>{
   const h=harness();await h.ui.load();
   h.request=async()=>({json:async()=>result({analysis_status:'running',task:{stage:'分析中',processed:36,total:720}})});

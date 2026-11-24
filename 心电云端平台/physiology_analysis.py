@@ -31,8 +31,10 @@ class PhysiologyService:
             import scipy
             from research.streaming_qrs import detect_adc
             from research.physiology import interval_statistics
+            from cloud_model.vendor.signal_quality import SignalQualityGate
             self.detect = detect_adc
             self.statistics = interval_statistics
+            self.minimum_run = SignalQualityGate.WINDOW
             digest = hashlib.sha256()
             for name in SOURCES:
                 digest.update(name.encode())
@@ -69,6 +71,7 @@ class PhysiologyService:
             return self.response(sid,'not_run','尚未分析当前记录版本，可开始 QRS/RR 分析',digest)
         try:
             saved = json.loads(path.read_text(encoding='utf-8'))
+            if not isinstance(saved, dict): raise ValueError('分析结果必须是对象')
             if (saved['session_id'] != sid or saved['source_digest'] != digest
                     or saved['analysis_status'] not in ('complete','ineligible')):
                 raise ValueError('分析结果标识不一致')
@@ -113,6 +116,11 @@ class PhysiologyService:
         def flush():
             nonlocal run, allowed, epoch_base, detector_seconds
             if not run: return
+            # No sample can pass the unchanged gate before its initial window.
+            # Avoid constructing filters for thousands of tiny disconnected runs.
+            if len(run) < self.minimum_run:
+                run = array('d')
+                return
             result = self.detect(run,block_size=PARAMETERS['block_size'])
             peaks.extend(run_start+int(p) for p in result['r_samples'])
             segments.extend(epoch_base+int(s) for s in result['segments'])
