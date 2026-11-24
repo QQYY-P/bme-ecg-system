@@ -13,6 +13,7 @@
 !/心电云端平台/
 !/硬件/
 /硬件/*
+!/硬件/README.md
 !/硬件/STM32心电采集/
 
 # Local environments, records, credentials, and generated material.
