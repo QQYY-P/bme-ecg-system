@@ -30,6 +30,9 @@ from analysis_tasks import AnalysisQueue, FileLock, QueueFull
 import measurement_store
 from device_store import DeviceStore
 from device_routes import add_routes as add_device_routes
+from database_management import DatabaseManager
+from database_routes import add_routes as add_database_routes
+from maintenance_tasks import MaintenanceQueue
 
 ROOT = Path(__file__).resolve().parent
 ID = re.compile(r'[A-Za-z0-9][A-Za-z0-9_-]{0,95}\Z')
@@ -199,15 +202,22 @@ def create_app(data_dir=None, token=None, device_id=None, auth_enabled=None, coo
     if os.getenv('ECG_PUBLIC_ACCESS') == '1' and not any(u['active'] and u['is_admin'] for u in auth.users()):
         raise ValueError('公网启动前请先创建管理员账号')
     jobs = AnalysisQueue(data, os.getenv('ECG_MODEL', ''))
+    database_manager = DatabaseManager(data, lock, lambda: model_service.active_session)
+    maintenance = MaintenanceQueue(data)
     @asynccontextmanager
     async def lifespan(_app):
         if jobs.has_pending(): jobs.start()
+        if maintenance.has_pending(): maintenance.start()
         try: yield
-        finally: jobs.close()
+        finally:
+            maintenance.close()
+            jobs.close()
     app = FastAPI(title='心电数据工作台', version='1.1.0', docs_url=None if auth_enabled else '/docs', redoc_url=None, lifespan=lifespan)
     app.state.auth = auth
     app.state.devices = devices
     app.state.jobs = jobs
+    app.state.database = database_manager
+    app.state.maintenance = maintenance
 
     @app.middleware('http')
     async def guard(request: Request, call_next):
@@ -262,6 +272,7 @@ def create_app(data_dir=None, token=None, device_id=None, auth_enabled=None, coo
             raise HTTPException(403, '需要管理员账号')
 
     add_device_routes(app,devices,require_admin)
+    add_database_routes(app, database_manager, maintenance, require_admin, identity.get)
 
     @app.get('/api/auth/config')
     def auth_config():
@@ -814,5 +825,9 @@ def create_app(data_dir=None, token=None, device_id=None, auth_enabled=None, coo
     @app.get('/devices')
     def device_manager_page():
         return FileResponse(ROOT / 'web' / 'device-manager.html')
+
+    @app.get('/database')
+    def database_page():
+        return FileResponse(ROOT / 'web' / 'database-manager.html')
 
     return app
