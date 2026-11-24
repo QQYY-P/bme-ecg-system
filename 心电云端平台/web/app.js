@@ -8,6 +8,7 @@ const state = {
   beatFilter:'all', amplitude:1
 };
 const PAGE_SIZE = 10;
+const physiologyUI = typeof ECGPhysiology === 'undefined' ? null : ECGPhysiology.create({element:$, context:()=>state, request:(...args)=>api(...args)});
 const sources = {demo: '本地合成', serial: '串口采集', replay: '文件回放', unknown: '来源未知'};
 const kinds = {live: '本次采集', historical: '历史转存', unknown: '上传来源待确认'};
 const classColors = {N:'#77e7c2', S:'#ffd27c', V:'#ff93b4'};
@@ -79,6 +80,7 @@ function selectSession(sid) {
   if (sid === state.selected) return;
   state.selected = sid; state.follow = true; state.generation++; state.analysisGeneration++;
   state.wave = null; state.analysis = null; state.analysisKey = ''; state.tableKey = '';
+  physiologyUI?.clear();
   $('content').hidden=true; $('chart').width=$('chart').width;
   $('detail-retry').disabled=false;
   detailFeedback(sid ? '正在读取测量结果…' : '');
@@ -266,13 +268,15 @@ async function selectBeat(beat) {
   $('wave-panel').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 async function loadAnalysis() {
+  const physiologyLoad=physiologyUI?.load();
   const sid=state.selected;
-  if(!sid || state.analyzing===sid)return;
+  if(!sid || state.analyzing===sid)return physiologyLoad;
   const generation=++state.analysisGeneration;
   try {
     const result=await (await api('/api/sessions/'+encodeURIComponent(sid)+'/analysis')).json();
     if(sid===state.selected && generation===state.analysisGeneration)renderAnalysis(result);
   } catch(error) {if(sid===state.selected && generation===state.analysisGeneration)text('model-message','模型状态读取失败：'+error.message);}
+  finally {await physiologyLoad;}
 }
 async function loadWave() {
   const sid=state.selected; if(!sid) return;
@@ -289,7 +293,7 @@ async function loadWave() {
     text('samples',count(s.sample_count));text('chunks',count(s.chunk_count)+' 个数据块已保存');
     text('duration',(s.sample_count/360).toFixed(1)+' s');
     text('valid',s.sample_count?(s.valid_count/s.sample_count*100).toFixed(1)+'%':'—');
-    text('device',s.device_id);renderProvenance(s);renderMeasurement(s);
+    text('device',s.device_id);renderProvenance(s);renderMeasurement(s);physiologyUI?.updateAvailability();
     text('source-status',({recording:'采集中',complete:'正常结束',incomplete:'未完整结束',recovered_incomplete:'中断后恢复',failed:'源记录异常',error:'源记录异常'})[s.source_status] || s.source_status);
     text('download',s.upload_status==='complete'?'下载完整 CSV':'下载已接收 CSV');
     text('upload-status',uploadLabel(s));$('upload-status').className='pill'+(uploadLabel(s)==='等待上传'?' warning':'');

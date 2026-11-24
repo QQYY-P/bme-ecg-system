@@ -1,0 +1,10 @@
+#physiology-panel{min-width:0;scroll-margin-top:16px}
+.physiology-body{padding:0 20px 20px;font-size:14px;line-height:1.8;overflow-wrap:anywhere}
+.physiology-body p{margin:0 0 12px}
+.physiology-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:0;margin:16px 0}
+.physiology-grid>div{display:block;background:#f1f7f5;border-radius:6px;padding:12px;min-width:0}
+.physiology-grid dt{font-size:12px;color:#527067}.physiology-grid dd{margin:4px 0 0;font-size:20px;font-weight:500}
+#hrv-message{padding:12px;border-left:3px solid #b78a42;background:#fcf8ef;color:#745d37}
+.physiology-caption,#physiology-version{font-size:12px;color:#5e737c}
+@media(min-width:1440px){#physiology-panel{grid-area:physiology}}
+@media(max-width:720px){.physiology-body{padding:0 16px 18px;font-size:16px}.physiology-grid dd{font-size:19px}.physiology-grid dt{font-size:13px}.physiology-caption,#physiology-version{font-size:13px}}

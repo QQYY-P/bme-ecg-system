@@ -10,9 +10,19 @@ VERSION='rr-hrv-research-v1'
 
 def interval_statistics(r_samples, *, segments=None, normal=None, fs=360,
                         observation_seconds=None, rr_limits_ms=(280.,2500.)):
-    peaks=np.asarray(r_samples,dtype=float)
-    if peaks.ndim!=1 or not np.isfinite(peaks).all() or np.any(peaks<0) or np.any(peaks!=np.floor(peaks)) or np.any(np.diff(peaks)<=0):
+    peaks=np.asarray(r_samples,dtype=object)
+    if peaks.ndim!=1:
         raise ValueError('R points must be finite, increasing, nonnegative integer sample positions')
+    positions=[]
+    for value in peaks:
+        if isinstance(value,(int,np.integer)):
+            position=int(value)
+        elif isinstance(value,(float,np.floating)) and np.isfinite(value) and value==np.floor(value):
+            position=int(value)
+        else: raise ValueError('R points must be integer sample positions')
+        if position<0 or (positions and position<=positions[-1]):
+            raise ValueError('R points must be increasing and nonnegative')
+        positions.append(position)
     if not np.isfinite(fs) or fs<=0:raise ValueError('Invalid sample rate')
     lo,hi=rr_limits_ms
     if not 0<lo<hi or not np.isfinite([lo,hi]).all():raise ValueError('Invalid RR bounds')
@@ -21,7 +31,9 @@ def interval_statistics(r_samples, *, segments=None, normal=None, fs=360,
     if normal is not None:
         normal=np.asarray(normal)
         if normal.shape!=peaks.shape or normal.dtype.kind!='b':raise ValueError('Normality must be an explicit boolean per beat')
-    rr=np.diff(peaks)*1000/fs
+    # Subtract exact integers before float conversion: absolute uint64 positions
+    # and long gaps must not round ordinary within-segment RR intervals.
+    rr=np.asarray([right-left for left,right in zip(positions,positions[1:])],dtype=float)*1000/fs
     same=segment[1:]==segment[:-1]
     within=(rr>=lo)&(rr<=hi)
     accepted=same&within
@@ -40,7 +52,7 @@ def interval_statistics(r_samples, *, segments=None, normal=None, fs=360,
                 'pnn50_percent' if nn else 'prr50_percent':float(100*np.mean(np.abs(differences)>50)) if len(differences) else None}
         return result
 
-    duration=float(observation_seconds) if observation_seconds is not None else (float((peaks[-1]-peaks[0])/fs) if len(peaks)>1 else 0.)
+    duration=float(observation_seconds) if observation_seconds is not None else (float((positions[-1]-positions[0])/fs) if len(positions)>1 else 0.)
     if not np.isfinite(duration) or duration<0:raise ValueError('Invalid observation duration')
     nn_mask=accepted&normal[:-1]&normal[1:] if normal is not None else None
     return {'version':VERSION,'sample_rate_hz':float(fs),'beat_count':len(peaks),

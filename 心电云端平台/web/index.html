@@ -15,6 +15,8 @@
   <script src="/assets/connection.js" defer></script>
   <script src="/assets/desktop_core.js" defer></script>
   <link rel="stylesheet" href="/assets/mobile.css">
+  <link rel="stylesheet" href="/assets/physiology.css">
+  <script src="/assets/physiology.js" defer></script>
   <script src="/assets/measurement.js" defer></script>
   <script src="/assets/devices.js" defer></script>
   <script src="/assets/app.js" defer></script>
@@ -67,7 +69,7 @@
         <div id="content" hidden>
           <div class="record-tools"><p id="record-note" class="muted"></p><div><button id="edit-record" class="button secondary">名称与备注</button><button id="trash-record" class="button secondary">移入回收站</button></div></div>
           <div class="record-header"><div><div class="record-title"><h2 id="record-name">采集会话</h2><span id="source" class="pill"></span><span id="provenance-kind" class="pill neutral"></span></div><p id="record-id" class="record-id"></p></div><button id="download" class="button secondary">下载完整 CSV</button></div>
-          <nav class="mobile-only result-shortcuts" aria-label="结果章节"><a href="#measurement-panel">测量总结</a><a href="#wave-panel">原始波形</a><a href="#analysis-panel">模型分析</a></nav>
+          <nav class="mobile-only result-shortcuts" aria-label="结果章节"><a href="#measurement-panel">测量总结</a><a href="#wave-panel">原始波形</a><a href="#physiology-panel">QRS/RR</a><a href="#analysis-panel">模型分析</a></nav>
           <div class="stats"><div class="stat panel"><span>已接收采样点</span><strong id="samples">—</strong><small id="chunks">—</small></div><div class="stat panel"><span>记录时长</span><strong id="duration">—</strong><small>按采样点数计算</small></div><div class="stat panel"><span>采样率</span><strong>360 <em>Hz</em></strong><small>单通道原始心电</small></div><div class="stat panel"><span>有效采样占比</span><strong id="valid">—</strong><small>依据 ADC 范围及记录标记</small></div></div>
           <section id="measurement-panel" class="panel measurement-panel" hidden aria-labelledby="measurement-title">
             <h2 id="measurement-title">本次测量总结</h2><p id="measurement-state" class="measurement-state" role="status"></p>
@@ -105,6 +107,25 @@
               </div>
             </section>
           </div>
+          <section id="physiology-panel" class="panel">
+            <div class="panel-heading"><h2>QRS / RR 分析</h2><span id="physiology-status" class="pill neutral">待分析</span></div>
+            <div class="physiology-body">
+              <p id="physiology-message" role="status"></p>
+              <div id="physiology-metrics" hidden>
+                <p>有效数据时长 <strong id="qrs-effective">—</strong></p>
+                <p id="qrs-coverage-note" class="physiology-caption"></p>
+                <dl class="physiology-grid">
+                  <div><dt>检测到的 R 峰</dt><dd id="qrs-count">—</dd></div><div><dt>平均 RR 间期</dt><dd id="rr-mean">—</dd></div>
+                  <div><dt>RR 换算平均心率</dt><dd id="rr-heart-rate">—</dd></div><div><dt>质量门控通过比例</dt><dd id="qrs-quality">—</dd></div>
+                  <div><dt>RR 标准差（SDRR）</dt><dd id="rr-sd">—</dd></div><div><dt>相邻 RR 均方根差</dt><dd id="rr-rmssd">—</dd></div>
+                </dl>
+                <p id="qrs-reasons" class="physiology-caption"></p><p id="hrv-message"></p>
+              </div>
+              <button id="physiology-analyze" class="button primary" disabled>开始 QRS/RR 分析</button>
+              <p class="physiology-caption">仅分析已上传完成的有效实采片段；断流与低质量片段之间不拼接 RR。RR 变异性不能直接视为基于正常窦性间期的 HRV。</p>
+              <p id="physiology-version"></p>
+            </div>
+          </section>
           <section id="beats-panel" class="panel beats-panel" hidden>
             <div class="panel-heading"><div><h2>心搏明细 <span id="beats-total" class="count"></span></h2><p class="muted">点击时间定位原始波形 · 每页 10 搏</p></div><span id="selected-beat" class="small muted" role="status"></span></div>
             <div class="beat-actions"><label>分类<select id="beat-filter"><option value="all">全部心搏</option><option value="SV">S / V 类</option><option value="N">N 类</option><option value="S">S 类</option><option value="V">V 类</option><option value="review">需复核</option></select></label><button id="beat-previous" class="button secondary">上一心搏</button><button id="beat-next" class="button secondary">下一心搏</button></div><p id="beats-empty" hidden>此筛选条件下没有心搏；可切回“全部心搏”。</p>

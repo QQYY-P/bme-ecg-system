@@ -12,6 +12,8 @@ MEMBERS = (
     'server.py', 'protocol.py', 'run_server.py', 'uploader.py', 'requirements.txt', 'requirements-model.txt',
     'auth_store.py', 'workspace_store.py', 'analysis_tasks.py', 'manage_accounts.py', 'measurement_store.py',
     'device_store.py', 'device_routes.py', 'web/devices.js',
+    'physiology_analysis.py', 'research/streaming_qrs.py', 'research/physiology.py',
+    'web/physiology.js', 'web/physiology.css',
     'web/device-manager.html', 'web/device-manager.js', 'web/device-manager.css',
     'web/measurement.js', 'web/measurement.css',
     'web/manifest.webmanifest', 'web/sw.js', 'web/offline.html', 'web/pwa.js', 'web/pwa.css',
