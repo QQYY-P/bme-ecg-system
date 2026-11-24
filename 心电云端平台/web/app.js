@@ -5,10 +5,10 @@ const state = {
   token: sessionStorage.getItem('ecg-token') || '', generation: 0, analysisGeneration: 0,
   analyzing: null, analysis: null, analysisKey: '', tableKey: '', views: new Map(), cloud: false,
   auth: false, ready: false, user: null, csrf: '', epoch: 0, listEpoch: 0, page: 0, total: 0, filters: {}, listKey: '',
-  beatFilter:'all', amplitude:1
+  beatFilter:'all', amplitude:1, physiology:null
 };
 const PAGE_SIZE = 10;
-const physiologyUI = typeof ECGPhysiology === 'undefined' ? null : ECGPhysiology.create({element:$, context:()=>state, request:(...args)=>api(...args)});
+const physiologyUI = typeof ECGPhysiology === 'undefined' ? null : ECGPhysiology.create({element:$, context:()=>state, request:(...args)=>api(...args), onChange:result=>{state.physiology=result;experience('renderSummary');}});
 const sources = {demo: '本地合成', serial: '串口采集', replay: '文件回放', unknown: '来源未知'};
 const kinds = {live: '本次采集', historical: '历史转存', unknown: '上传来源待确认'};
 const classColors = {N:'#77e7c2', S:'#ffd27c', V:'#ff93b4'};
@@ -29,6 +29,7 @@ function currentBeats() {
   return state.analysis?.session_id === state.selected && state.analysis.analysis_status === 'complete'
     ? state.analysis.model_result?.beats || [] : [];
 }
+function experience(action,...args){if(typeof UserExperience!=='undefined')return UserExperience[action]?.(...args);}
 function notice(value) { text('notice', value); $('notice').hidden = !value; }
 function connectionStatus(problem=null) {
   const banner=$('connection-banner');if(!banner)return;
@@ -85,6 +86,7 @@ function selectSession(sid) {
   $('detail-retry').disabled=false;
   detailFeedback(sid ? '正在读取测量结果…' : '');
   if (typeof MobileUI !== 'undefined') MobileUI.selectionChanged();
+  experience('selectionChanged');
   renderAnalysis({session_id:sid, analysis_status:'loading', message:'正在读取此记录的模型状态'});
   draw();
 }
@@ -100,16 +102,19 @@ function renderList() {
     p.textContent = filtered ? '没有符合条件的记录。可展开“搜索与筛选”，重置条件后再试。' : '还没有测量记录。在树莓派选择本人账号，完成测量后点击“上传并分析”，再刷新这里。';
     parent.append(p); return;
   }
+  let previousDay='';
   for (const s of state.sessions) {
     const button=document.createElement('button'); button.className='session'+(s.session_id===state.selected?' active':'');
     button.dataset.sessionId = s.session_id;
+    const day=typeof ECGExperience!=='undefined'?ECGExperience.localDay(s.first_uploaded_at || s.received_at):'';
+    if(day && day!==previousDay){const heading=document.createElement('h3');heading.className='session-day mobile-only';heading.textContent=day+' · 上传登记';parent.append(heading);previousDay=day;}
     button.setAttribute('aria-pressed', String(s.session_id===state.selected));
     const title=document.createElement('span'); title.className='session-title'; title.textContent=s.name || sources[s.source] || '来源未知';
     const tag=document.createElement('span'); tag.className='session-kind'; tag.textContent=kinds[s.provenance?.kind] || kinds.unknown;
     const sub=document.createElement('span'); sub.className='session-sub'; sub.textContent='采集 ' + date(s.started_utc);
     const data=document.createElement('span'); data.className='session-data';
-    const n=document.createElement('span'); n.textContent=count(s.sample_count)+' 点';
-    const status=document.createElement('span'); status.className='session-status'; status.textContent=uploadLabel(s);
+    const n=document.createElement('span'); n.textContent=Number.isFinite(s.sample_count)?(s.sample_count/360).toFixed(1)+' 秒':'时长未知';
+    const status=document.createElement('span'); status.className='session-status'; status.textContent=uploadLabel(s)+(s.source_status==='complete'?'':' · 采集状态待核对');
     data.append(n,status); button.append(title,tag,sub,data);
     button.onclick=()=>{
       selectSession(s.session_id);renderList();
@@ -135,13 +140,14 @@ async function refresh() {
     $('records-prev').disabled=!state.page; $('records-next').disabled=(state.page+1)*20>=result.total;
     renderDevices(device);
     if(!state.sessions.some(s=>s.session_id===state.selected)) selectSession(state.sessions[0]?.session_id || null);
-    renderList(); $('empty').hidden=!!state.selected; $('content').hidden=!state.selected || state.wave?.session?.session_id!==state.selected;
+    renderList(); experience('listUpdated'); $('empty').hidden=!!state.selected; $('content').hidden=!state.selected || state.wave?.session?.session_id!==state.selected;
     connectionStatus(); notice('');
     if(state.selected && (typeof MobileUI === 'undefined' || MobileUI.needsDetail())) await Promise.all([loadWave(),loadAnalysis()]);
   } catch(error) {
     if(epoch!==state.epoch || listEpoch!==state.listEpoch) return;
     text('service','● 连接中断'); $('service').classList.add('off');
     notice(error.message + '。已显示的数据保留，请检查服务或访问设置。');
+    experience('listFailed');
   } finally {if(state.busy===busy) state.busy=false;}
 }
 function renderProvenance(s) {
@@ -185,7 +191,7 @@ function renderInputSummary(result) {
 }
 function renderAnalysis(result) {
   if(result.session_id && result.session_id!==state.selected) return;
-  state.analysis=result;
+  state.analysis=result;experience('renderSummary');
   const labels={loading:'读取中',not_configured:'未接入模型',not_run:'可开始分析',queued:'排队中',running:'分析中',complete:'复算完成',ineligible:'无可分类片段',failed:'分析失败',stale:'需要重新分析'};
   const status=result.analysis_status || 'not_configured';
   text('model-status',labels[status] || '模型状态未知');
@@ -275,7 +281,11 @@ async function loadAnalysis() {
   try {
     const result=await (await api('/api/sessions/'+encodeURIComponent(sid)+'/analysis')).json();
     if(sid===state.selected && generation===state.analysisGeneration)renderAnalysis(result);
-  } catch(error) {if(sid===state.selected && generation===state.analysisGeneration)text('model-message','模型状态读取失败：'+error.message);}
+  } catch(error) {if(sid===state.selected && generation===state.analysisGeneration){
+    state.analysis={session_id:sid,analysis_status:'unavailable'};state.analysisKey='';renderBeats();draw();
+    $('model-result').hidden=true;$('input-summary').hidden=true;$('analyze').disabled=true;
+    text('model-status','暂时无法读取');text('model-message','模型状态读取失败：'+error.message);experience('renderSummary');
+  }}
   finally {await physiologyLoad;}
 }
 async function loadWave() {
@@ -308,9 +318,10 @@ async function loadWave() {
     text('follow',state.follow?'跟随最新':'查看历史');
     const hasValid=wave.points.some(p=>p[1]!==null);
     text('chart-empty',wave.points.length?'当前窗口均为无效采样，数据已保存':'该范围暂无数据');
-    $('chart-empty').hidden=hasValid;draw();
+    $('chart-empty').hidden=hasValid;draw();experience('detailUpdated');
   } catch(error) {
     if(sid===state.selected && generation===state.generation) {
+      experience('detailFailed');
       detailFeedback((state.wave ? '更新失败，以下保留上次读取的结果。' : '测量结果暂时无法读取。') + '请检查网络后重试。' + error.message, true);
     }
   }
@@ -324,22 +335,27 @@ function draw() {
   const canvas=$('chart'), rect=canvas.getBoundingClientRect(); if(!rect.width) return;
   const ratio=window.devicePixelRatio||1;canvas.width=Math.round(rect.width*ratio);canvas.height=Math.round(rect.height*ratio);
   const c=canvas.getContext('2d');c.scale(ratio,ratio);
+  // Match the phone's light surface without changing signal values or desktop colors.
+  const light=window.matchMedia('(max-width: 720px)').matches;
+  const palette=light
+    ? {grid:'#cbdedb',minor:'#e6efed',label:'#516c70',wave:'#087f71',selection:'#254a54',edge:'#ffffff',N:'#087565',S:'#9a6500',V:'#b43463'}
+    : {grid:'#234048',minor:'#17343c',label:'#7a9c9e',wave:'#5ce2af',selection:'#ffffff',edge:'#0c2026',...classColors};
   const w=rect.width,h=rect.height,left=43,right=13,top=22,bottom=26,pw=w-left-right,ph=h-top-bottom;
-  c.clearRect(0,0,w,h);c.font='9px "Segoe UI",sans-serif';
+  c.clearRect(0,0,w,h);c.font=(light?'11':'9')+'px "Segoe UI",sans-serif';
   const wave=state.wave, points=wave?.session?.session_id===state.selected?wave.points:[], values=points.filter(p=>p[1]!==null).map(p=>p[1]);
   let lo=values.length?Math.min(...values):0,hi=values.length?Math.max(...values):4095;
   const spread=Math.max(hi-lo,200);lo=Math.max(0,lo-spread*.2);hi=Math.min(4095,hi+spread*.2);
   const center=(lo+hi)/2,range=(hi-lo)/state.amplitude;lo=center-range/2;hi=center+range/2;
   const end=wave?.end_sample??3599,start=wave?.start_sample??0,span=Math.max(end-start,360);
   for(let y=0;y<=4;y++) {
-    const py=top+ph*y/4;c.strokeStyle='#234048';c.lineWidth=.6;c.beginPath();c.moveTo(left,py);c.lineTo(w-right,py);c.stroke();
-    c.fillStyle='#7a9c9e';c.textAlign='right';c.fillText(String(Math.round(hi-(hi-lo)*y/4)),left-9,py+3);
+    const py=top+ph*y/4;c.strokeStyle=palette.grid;c.lineWidth=.6;c.beginPath();c.moveTo(left,py);c.lineTo(w-right,py);c.stroke();
+    c.fillStyle=palette.label;c.textAlign='right';c.fillText(String(Math.round(hi-(hi-lo)*y/4)),left-9,py+3);
   }
   for(let x=0;x<=10;x++) {
-    const px=left+pw*x/10;c.strokeStyle=x%2?'#17343c':'#234048';c.beginPath();c.moveTo(px,top);c.lineTo(px,top+ph);c.stroke();
-    if(x%2===0){c.fillStyle='#7a9c9e';c.textAlign='center';c.fillText(((start+span*x/10)/360).toFixed(1)+'s',px,h-7);}
+    const px=left+pw*x/10;c.strokeStyle=x%2?palette.minor:palette.grid;c.beginPath();c.moveTo(px,top);c.lineTo(px,top+ph);c.stroke();
+    if(x%2===0){c.fillStyle=palette.label;c.textAlign='center';c.fillText(((start+span*x/10)/360).toFixed(1)+'s',px,h-7);}
   }
-  c.save();c.beginPath();c.rect(left,top,pw,ph);c.clip();c.strokeStyle='#5ce2af';c.lineWidth=1.35;c.lineJoin='round';c.beginPath();let connected=false;
+  c.save();c.beginPath();c.rect(left,top,pw,ph);c.clip();c.strokeStyle=palette.wave;c.lineWidth=light?1.6:1.35;c.lineJoin='round';c.beginPath();let connected=false;
   for(const p of points) {
     if(p[1]===null){connected=false;continue;}
     const x=left+(p[0]-start)/span*pw,y=top+(hi-p[1])/(hi-lo)*ph;
@@ -352,12 +368,12 @@ function draw() {
     const selected=view().selected; let lastLabelX=-100;
     for(const {beat,point} of markers) {
       const x=left+(beat.sample_id-start)/span*pw,y=top+(hi-point[1])/(hi-lo)*ph,isSelected=beatKey(beat)===selected;
-      const color=classColors[beat.label] || '#ffffff';
+      const color=palette[beat.label] || palette.selection;
       if(isSelected) {
-        c.strokeStyle='#ffffff';c.lineWidth=1;c.setLineDash([3,3]);c.beginPath();c.moveTo(x,top);c.lineTo(x,top+ph);c.stroke();c.setLineDash([]);
+        c.strokeStyle=palette.selection;c.lineWidth=1;c.setLineDash([3,3]);c.beginPath();c.moveTo(x,top);c.lineTo(x,top+ph);c.stroke();c.setLineDash([]);
       }
       c.beginPath();c.arc(x,y,isSelected?5:3,0,Math.PI*2);c.fillStyle=color;c.fill();
-      c.strokeStyle=isSelected?'#ffffff':'#0c2026';c.lineWidth=isSelected?2:1;c.stroke();
+      c.strokeStyle=isSelected?palette.selection:palette.edge;c.lineWidth=isSelected?2:1;c.stroke();
       if(isSelected || x-lastLabelX>32) {
         c.fillStyle=color;c.textAlign='center';c.font='bold 10px "Segoe UI",sans-serif';
         c.fillText(beat.label,x,Math.max(top+10,y-10));lastLabelX=x;

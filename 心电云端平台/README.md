@@ -9,6 +9,7 @@
 - [下载电脑端与打开网页](../README.md#应用下载)
 - [快速开始](docs/快速开始.md)、[使用说明](docs/使用说明.md)、[故障排查](docs/故障排查.md)；[离线文本](README.txt) 自动生成，原文快照在历史目录。
 - [管理员账号管理](docs/使用说明.md#管理员账号管理待部署) — 搜索、筛选、创建、重置密码、停用/恢复及撤销登录；PR #29 已合并，公网及已发布 APK 待更新。
+- [数据库管理](docs/使用说明.md#数据库管理源码已实现待部署) — 存储概况、记录整理、完整性检查与服务器本地备份；源码已实现，待部署。
 - [当前进度及部署验证](docs/云端工作台迭代.md) — 功能、版本、备份与待验收项的统一入口。
 - [Windows 客户端构建](deploy/desktop/README.md)、[Linux 部署](deploy/linux/部署说明.txt)、[手机 HTTPS 访问](deploy/linux/手机公网访问说明.txt)
 - [Android 试用版下载与验收边界](../docs/手机端与安卓安装包.md)、[Android 工程与构建](android/README.md)
@@ -20,6 +21,7 @@
 | --- | --- |
 | [server.py](server.py)、[run_server.py](run_server.py) | 服务端与启动入口 |
 | `*_store.py`、[device_routes.py](device_routes.py)、[analysis_tasks.py](analysis_tasks.py) | 账号、设备、记录与持久分析任务 |
+| [database_management.py](database_management.py)、[database_backup.py](database_backup.py)、[maintenance_tasks.py](maintenance_tasks.py) | 管理元信息、服务器本地备份及独立维护任务 |
 | [web/](web/) | 手机/电脑网页、PWA、波形与操作界面 |
 | [android/](android/README.md) | Android 试用客户端、资源与构建工具 |
 | [cloud_model/](cloud_model/README.md) | 云端模型适配器及固定版本依赖；[来源](cloud_model/SOURCE.json) |

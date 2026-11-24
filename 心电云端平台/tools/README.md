@@ -8,6 +8,7 @@
 | --- | --- | --- |
 | 服务入口 | [run_server.py](../run_server.py)、[启动服务.cmd](../启动服务.cmd)、[停止服务.ps1](../停止服务.ps1) | 启动/停止本地服务；当前开发步骤见快速开始 |
 | 账号管理 | [manage_accounts.py](../manage_accounts.py) | 修改指定数据目录的账号或设备密钥；`python manage_accounts.py --help` 查看命令，不在公开日志记录凭据 |
+| 数据恢复 | [restore_database.py](restore_database.py) | `python tools/restore_database.py <服务器备份ZIP> --destination <不存在的新目录>`；逐文件验证后写新目录，撤销恢复库中的旧登录会话与设备密钥，不切换正式服务；见[使用说明](../docs/使用说明.md#服务器上的备份与恢复) |
 | 合成演示 | [demo.py](../demo.py)、[运行演示.cmd](../运行演示.cmd) | 默认会生成并上传模拟记录；`python demo.py --generate-only` 只生成本地合成记录 |
 | 记录上传 | [uploader.py](../uploader.py) | `python uploader.py --session-dir <目录> --url <地址>`；上传已有记录并保存重试状态，先核对授权及目标 |
 | 本机链路验证 | [verify_local.py](../verify_local.py)、[verify_board.py](../verify_board.py) | 依赖相应服务、演示或板端参考资料；先读脚本说明；不是无需前置数据的单元测试 |

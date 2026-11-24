@@ -1,6 +1,6 @@
 # 心电记录 · 安卓安装包
 
-下载入口：[Android 1.0.0 试用版](https://github.com/XiongBoT/bme-ecg-system/releases/tag/android-v1.0.0-preview.1)。最终包 `dist/ecg-records-1.0.0.apk` 为 96,320 字节，APK v2/v3 签名、文件对齐、安装信息和资源清单已通过检查；尚未进行安卓手机实机安装验收。当前仓库私有，GitHub 下载需要仓库访问权限。
+下载入口：[Android 1.0.0 试用版](https://github.com/XiongBoT/bme-ecg-system/releases/tag/android-v1.0.0-preview.1)。最终包 `dist/ecg-records-1.0.0.apk` 为 96,320 字节，APK v2/v3 签名、文件对齐、安装信息和资源清单已通过检查；尚未进行安卓手机实机安装验收。当前仓库公开，平台中的个人记录仍需登录本人账号访问。
 
 应用使用已有项目账号，预设服务器 `https://62.234.150.104/`。界面资源随 APK 安装；账号、设备、心电记录和分析仍由现有服务器提供，需要联网。无需在手机填写服务器地址，也不包含任何预设账号密码。
 
@@ -26,7 +26,7 @@ Windows 构建中间文件放在 SDK 下的 `app-build` 英文目录，避免 aa
 python build.py --sdk "你的安卓SDK目录" --jdk "你的JDK目录"
 ```
 
-输出为 `dist/ecg-records-1.0.0.apk`，同时生成 SHA-256、签名验证记录和构建信息。只有脚本退出成功且该 APK 存在时，才表示安装包生成完成。
+当前源码输出为 `dist/ecg-records-1.0.2.apk`，内部版本 1.0.2（3），同时生成 SHA-256、签名验证记录和构建信息。只有脚本退出成功且该 APK 存在时，才表示安装包生成完成。1.0.2 已完成本地构建，尚未发布到 GitHub；上方下载链接仍为历史 1.0.0 试用版。本轮界面变化与验证边界见 [日常使用流程](../../docs/手机端与安卓安装包.md#2026-11-24-日常使用流程102本地构建)。
 
 将 APK 传到安卓手机，点击文件并按系统提示允许该文件来源安装。完成后打开“心电记录”，用项目账号登录。服务器和设备上传链路需正常运行；应用不承担离线分析或树莓派采集程序的职责。
 
@@ -47,6 +47,9 @@ python build.py --sdk "你的安卓SDK目录" --jdk "你的JDK目录"
 - APK 隐藏 Windows 下载入口。管理员“设备管理”打开固定项目网址的系统浏览器，需在浏览器独立登录后管理及下载凭据；应用不向浏览器传递登录凭据。
 - 不自动缓存心电数据，不包含 SDK、样例记录、凭据或模型数据；仅明确列出的网页资源进入 APK。
 - 手机交互、账号清空、日期校验、失败重试和导出分派通过 Node 回归测试；地址/路径策略通过 Java 独立测试。
+- 1.0.2 导航为“记录、设备、我的”，结果从记录进入。“预览报告”只整理当前已读取的结果和波形片段，标明读取时间、范围与来源；不自动保存或分享。
+- 用户在报告预览主动点击打印后，固定 `ecg-report://print` 入口核对来源与手势，读取有效快照，交由禁用脚本、文件访问和网络的独立 WebView 打印。取消或结束后清理该 WebView。浏览器版使用浏览器打印，系统是否提供 PDF 保存需在目标设备验收。
+- CSV 完成保存后可主动选择“打开文件”，只向用户选择的文件查看应用授予该文件读取权限；没有查看应用时，已保存文件仍保留在所选位置。
 - 需要实机确认：安装/启动、登录与退出、记录筛选与波形、后台再打开、断网重连、修改密码、CSV 保存、覆盖升级。云端尚未部署的接口功能仍取决于对应服务器版本。
 
-官方依据：[WebViewClient](https://developer.android.com/reference/android/webkit/WebViewClient)、[AAPT2](https://developer.android.com/tools/aapt2)、[命令行构建与签名](https://developer.android.com/build/building-cmdline)。
+官方依据：[WebViewClient](https://developer.android.com/reference/android/webkit/WebViewClient)、[HTML 打印](https://developer.android.com/training/printing/html-docs)、[AAPT2](https://developer.android.com/tools/aapt2)、[命令行构建与签名](https://developer.android.com/build/building-cmdline)。

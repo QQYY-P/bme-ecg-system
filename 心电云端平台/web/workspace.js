@@ -24,7 +24,7 @@ function clearAccount() {
   $('input-summary').hidden=true; $('beats-panel').hidden=true; $('marker-legend').hidden=true;
   $('skip-reasons').replaceChildren(); $('chart').width=$('chart').width;
   $('record-form').reset(); $('new-user-form').reset(); $('password-form').reset(); renderDevice(null); notice('');
-  $('filters').reset(); for(const dialog of document.querySelectorAll('dialog[open]')) dialog.close();
+  $('filters').reset(); experience('clear'); for(const dialog of document.querySelectorAll('dialog[open]')) dialog.close();
   draw();
 }
 function showLogin(message='') {
@@ -38,6 +38,7 @@ function enterWorkspace(payload) {
   $('settings').hidden=state.auth; $('logout').hidden=!state.auth; $('admin').hidden=!state.user?.is_admin;
   $('change-password').hidden=!state.auth;
   $('manage-devices').hidden=!state.user?.is_admin;
+  $('manage-database').hidden=!state.user?.is_admin;
   text('account-name',state.user ? state.user.username+' · 我的记录' : '本机工作台');
   $('login-submit').disabled=false;connectionStatus();
   refresh();
