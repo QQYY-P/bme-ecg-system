@@ -2,31 +2,32 @@
 
 STM32 心电采集、树莓派显示与分析、云端记录平台的共同开发仓库。
 
-从下表选择要做的事；各模块的 `README.md` 提供导航，现行步骤在模块 `docs/`，`README.txt` 由这些文档自动生成供离线查阅。
+按使用目的选择入口。各模块 README 提供导航，具体操作在模块 `docs/`；离线 `README.txt` 由现行 Markdown 自动生成。
 
-| 你要做什么 | 入口 |
+| 你要做什么 | 从这里开始 |
 | --- | --- |
-| 了解项目目标、实施阶段和验收条件 | [项目计划书](docs/项目计划书.md) |
-| 下载客户端、打开网页 | [应用下载](#应用下载) |
-| 接线、查看 STM32 固件 | [硬件导航](硬件/README.md) |
-| 运行树莓派采集终端 | [终端导航](树莓派心电终端/README.md)、[日常使用](树莓派心电终端/docs/设备待机与日常使用.md) |
-| 开发云端、网页或客户端 | [云端导航](心电云端平台/README.md) |
-| 找算法、模型或评估结果 | [算法与评估](docs/算法与评估.md) |
-| 根据功能定位源码 | [仓库导览](docs/仓库导览.md) |
-| 参与开发、运行检查 | [成员入门](CONTRIBUTING.md)、[检查工具](tools/README.md) |
-| 查接口、全部文档或版本变化 | [接口约定](docs/接口约定.md)、[文档中心](docs/README.md)、[更新日志](CHANGELOG.md) |
+| 下载并使用系统 | [应用下载](#应用下载) → [快速开始](心电云端平台/docs/快速开始.md#使用现有平台) |
+| 手机查记录、设备或报告 | [手机使用说明](心电云端平台/docs/使用说明.md#手机使用流程102-源码待发布) · [手机版本区别](docs/手机端与安卓安装包.md) |
+| 在终端测量、接线或排查设备 | [终端日常使用](树莓派心电终端/docs/设备待机与日常使用.md) · [硬件导航](硬件/README.md) |
+| 管理账号、设备和数据库 | [管理员操作](心电云端平台/docs/使用说明.md#管理员账号管理待部署) · [数据库管理](心电云端平台/docs/使用说明.md#数据库管理源码已实现待部署) |
+| 确认哪些功能已合并、已发布或待部署 | [版本与交付状态](docs/版本与交付状态.md) |
+| 阅读源码与接口 | [仓库导览](docs/仓库导览.md) → [接口约定](docs/接口约定.md) |
+| 找算法、模型和实验结果 | [算法与评估](docs/算法与评估.md) |
+| 参与开发、了解计划或查全部文档 | [贡献指南](CONTRIBUTING.md) · [项目计划书](docs/项目计划书.md) · [文档中心](docs/README.md) |
 
 ## 应用下载
 
-**[下载 Windows 1.1.0 免安装版 ZIP](https://github.com/XiongBoT/bme-ecg-system/releases/download/desktop-v1.1.0/ecg-workspace-windows-1.1.0.zip)** · [版本说明与校验文件](https://github.com/XiongBoT/bme-ecg-system/releases/tag/desktop-v1.1.0)
+| 平台 | 当前下载或入口 | 使用方式 |
+| --- | --- | --- |
+| Windows 10/11 | [下载 1.1.0 ZIP](https://github.com/XiongBoT/bme-ecg-system/releases/download/desktop-v1.1.0/ecg-workspace-windows-1.1.0.zip) · [版本与校验](https://github.com/XiongBoT/bme-ecg-system/releases/tag/desktop-v1.1.0) | 全部解压后双击“心电工作台.exe”；无需 Python 或 Node.js，需联网 |
+| Android 8.0+ | [下载 1.0.0 试用 APK](https://github.com/XiongBoT/bme-ecg-system/releases/download/android-v1.0.0-preview.1/ecg-records-1.0.0.apk) · [版本与校验](https://github.com/XiongBoT/bme-ecg-system/releases/tag/android-v1.0.0-preview.1) | 安装后使用现有平台账号；实体手机安装、保存和升级仍待验收 |
+| 浏览器／iPhone | [打开 HTTPS 网页](https://62.234.150.104/) | 联网使用；iPhone 可添加到主屏幕 |
 
-适用于 Windows 10/11。下载后右键选择“全部解压”，双击文件夹中的 **心电工作台.exe**，使用已有的心电云端账号登录。无需安装 Python 或 Node.js，需要联网；详细操作见 [使用说明](心电云端平台/deploy/desktop/使用说明.txt)。
+**当前下载仍为 Windows 1.1.0 和 Android 1.0.0 试用版。** 手机 1.0.2、账号管理、独立 QRS/RR 和数据库管理已合入源码，发布与部署状态见[统一状态页](docs/版本与交付状态.md)。旧 APK 的“记录、结果、账号”与新源码的“记录、设备、我的”属于不同版本；刷新旧 APK 不会更新内置界面。
 
-这是已上线云端工作台的桌面入口，功能随云端更新。手机或其他电脑可直接使用 [网页版](https://62.234.150.104/)。仓库当前为公开仓库；心电平台中的记录仍需使用各自账号登录后访问。
+仓库及安装包公开，个人心电记录仍需使用本人平台账号登录。没有账号或忘记密码时，联系创建账号的项目管理员；GitHub 账号、服务器 SSH 账号与平台账号分别管理。
 
-**[下载 Android APK（试用版）](https://github.com/XiongBoT/bme-ecg-system/releases/download/android-v1.0.0-preview.1/ecg-records-1.0.0.apk)** · [版本说明与校验文件](https://github.com/XiongBoT/bme-ecg-system/releases/tag/android-v1.0.0-preview.1)
-
-安卓 8.0 及以上可安装，使用现有心电平台账号，需要联网。APK 内置“记录、结果、账号”手机界面，支持波形查看和 CSV 保存；设备管理会打开系统浏览器。当前为预发布，安卓实机安装、系统文件保存及覆盖升级仍待验收。源码与构建见 [安卓工程说明](心电云端平台/android/README.md)，验证范围见 [手机端与安卓安装包](docs/手机端与安卓安装包.md)。iPhone 继续使用网页版并按页面指引添加到主屏幕。
+安装细节：[Windows 使用说明](心电云端平台/deploy/desktop/使用说明.txt) · [手机与 APK 指南](docs/手机端与安卓安装包.md)。
 
 ## 从这里开始
 
@@ -64,7 +65,7 @@ STM32 使用现有 Keil 工程：ARM Compiler 5.06 update 7（build 960）、Kei
 
 **所有协作者均可修改所有模块，没有按人员或目录划分的写入限制。** 每项任务单独建立分支，通过检查并解决审查讨论后，以 Pull Request 合并；其他成员复核为可选，流程见 [贡献指南](CONTRIBUTING.md) 和 [协作质量与发布](docs/协作质量与发布.md)。
 
-`main` 为共同集成分支；每个任务从最新 `main` 建立 `feat/...`、`fix/...` 或 `docs/...` 分支。当前初始提交记录本机源码状态，**不代表所有功能已部署到树莓派或公网**。发布时记录提交编号、设备、验证结果和回退版本。
+`main` 为共同集成分支；每个任务从最新 `main` 建立 `feat/...`、`fix/...` 或 `docs/...` 分支。各组件的已合并、已发布和待验收状态统一见[版本与交付状态](docs/版本与交付状态.md)，源码合并不会自动部署到树莓派或公网。发布时记录提交编号、设备、验证结果和回退版本。
 
 当前模型、第三方库和公开验证数据沿用各自许可证。保留其 LICENSE 与来源说明；仓库未为整个项目额外授予开源许可证。分类结果用于课程研究，不将软件测试结果表述为临床有效性验证。
 
