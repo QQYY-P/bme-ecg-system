@@ -143,7 +143,31 @@
   <nav id="mobile-nav" class="mobile-nav" aria-label="主导航"><button id="nav-records" type="button" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg><span>记录</span></button><button id="nav-results" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg><span>结果</span></button><button id="nav-account" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg><span>账号</span></button></nav>
   </div>
   <dialog id="record-editor"><form id="record-form"><h2>名称与备注</h2><label for="edit-name">记录名称</label><input id="edit-name" maxlength="100"><label for="edit-note">备注</label><textarea id="edit-note" maxlength="1000" rows="4"></textarea><p id="edit-error" class="form-error" role="alert"></p><div class="dialog-actions"><button type="button" class="button secondary" onclick="this.closest('dialog').close()">取消</button><button type="submit" class="button primary">保存</button></div></form></dialog>
-  <dialog id="admin-dialog" class="admin-dialog"><div class="panel-heading"><h2>账号管理</h2><button class="button secondary" onclick="this.closest('dialog').close()">关闭</button></div><p>每个账号仅查看分配给自己的记录。旧记录需明确指定归属。</p><div id="user-list"></div><form id="new-user-form"><label for="new-username">新账号（3–32 位字母、数字、横线或下划线）</label><input id="new-username" required maxlength="32" autocomplete="off" autocapitalize="none"><label for="new-password">初始密码（至少 10 个字符）</label><input id="new-password" type="password" required minlength="10" maxlength="128" autocomplete="new-password"><button type="submit" class="button primary">创建普通账号</button></form><p id="admin-error" class="form-error" role="alert"></p><h2>待分配记录</h2><div id="unassigned-list"></div></dialog>
+  <dialog id="admin-dialog" class="admin-dialog" aria-labelledby="admin-title">
+    <div class="panel-heading"><h2 id="admin-title">账号管理</h2><button type="button" class="button secondary" onclick="this.closest('dialog').close()">关闭</button></div>
+    <p>管理登录与账号状态。每个账号仅查看分配给自己的记录，停用或撤销登录均保留记录和归属。</p>
+    <p id="admin-success" class="admin-success" role="status"></p>
+    <div class="admin-overview"><strong id="admin-summary"></strong><button id="admin-refresh" type="button" class="button secondary">刷新</button></div>
+    <div class="admin-filters">
+      <label for="admin-query">查找账号<input id="admin-query" type="search" placeholder="输入账号名称" maxlength="32" autocomplete="off" autocapitalize="none" spellcheck="false"></label>
+      <label for="admin-status-filter">账号状态<select id="admin-status-filter"><option value="all">全部状态</option><option value="active">可登录</option><option value="disabled">已停用</option></select></label>
+      <label for="admin-role-filter">账号角色<select id="admin-role-filter"><option value="all">全部角色</option><option value="user">普通账号</option><option value="admin">管理员</option></select></label>
+    </div>
+    <p id="admin-loading" role="status"></p><p id="admin-error" class="form-error" role="alert"></p>
+    <p class="muted">有效登录指尚未过期的登录凭证，不代表实时在线人数。历史时间未保存时显示“未记录”。</p>
+    <div id="user-list"></div>
+    <nav class="admin-pagination" aria-label="账号列表翻页"><button id="admin-prev" type="button" class="button secondary">上一页</button><span id="admin-page" role="status"></span><button id="admin-next" type="button" class="button secondary">下一页</button></nav>
+    <details class="admin-create"><summary>创建普通账号</summary>
+      <form id="new-user-form">
+        <label for="new-username">新账号</label><input id="new-username" required maxlength="32" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="new-username-hint">
+        <p id="new-username-hint">3–32 位字母、数字、横线或下划线，以字母或数字开头；大写字母会转换为小写。</p>
+        <label for="new-password">初始密码（10–128 个字符）</label><input id="new-password" type="password" required minlength="10" maxlength="128" autocomplete="new-password">
+        <label for="new-password-confirm">再次输入初始密码</label><input id="new-password-confirm" type="password" required minlength="10" maxlength="128" autocomplete="new-password">
+        <p id="new-user-error" class="form-error" role="alert"></p><button id="new-user-submit" type="submit" class="button primary">创建账号</button>
+      </form>
+    </details>
+    <details class="admin-unassigned"><summary>分配历史记录</summary><p>只处理尚无所属账号的记录。确认归属后无法在此更改。</p><p id="unassigned-error" class="form-error" role="alert"></p><div id="unassigned-list"></div></details>
+  </dialog>
   <dialog id="credentials"><form method="dialog"><h2>访问设置</h2><p>本机访问无需填写。连接已设置凭证的服务时，在此输入。</p><label for="token">访问凭证</label><input id="token" type="password" autocomplete="off"><div class="dialog-actions"><button class="button secondary" value="cancel">取消</button><button id="save-token" class="button primary" value="save">保存</button></div></form></dialog>
   <dialog id="password-dialog"><form id="password-form"><h2 id="password-title">修改密码</h2><p>密码修改后，该账号的原有登录全部失效，采集记录保留。</p><div id="current-password-field"><label for="current-password">旧密码</label><input id="current-password" type="password" maxlength="128" autocomplete="current-password" required></div><label for="replacement-password">新密码（10–128 个字符）</label><input id="replacement-password" type="password" minlength="10" maxlength="128" autocomplete="new-password" required><label for="confirm-password">再次输入新密码</label><input id="confirm-password" type="password" minlength="10" maxlength="128" autocomplete="new-password" required><p id="password-error" class="form-error" role="alert"></p><div class="dialog-actions"><button type="button" class="button secondary" onclick="this.closest('dialog').close();document.getElementById('password-form').reset()">取消</button><button id="password-submit" type="submit" class="button primary">确认修改</button></div></form></dialog>
   <dialog id="desktop-download" aria-labelledby="desktop-download-title"><h2 id="desktop-download-title">把工作台放到电脑桌面</h2><p>Windows 10/11 · 免安装版 1.1.0</p><ol><li>下载并完整解压压缩包。</li><li>双击“心电工作台.exe”。</li><li>使用现有账号登录，查看自己的记录。</li></ol><a class="button primary" href="/downloads/ecg-workspace-windows.zip" download="心电工作台-Windows免安装.zip">↓ 下载 Windows 压缩包</a><p class="desktop-download-note">需要联网和 Edge 或 Chrome。无需 Python / Node.js，包内不含账号或采集数据。程序暂未签名，若系统限制运行，可直接使用当前网页。</p><a href="/downloads/ecg-workspace-windows.zip.sha256">查看 SHA256 校验</a><div class="dialog-actions"><button id="desktop-download-close" class="button secondary">关闭</button></div></dialog>
