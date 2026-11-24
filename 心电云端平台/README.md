@@ -2,6 +2,8 @@
 
 接收树莓派记录，按账号与设备管理数据，提供波形回看及后台分析。手机和电脑共用网页；Windows 启动器在 `deploy/desktop/`。
 
+[项目首页](../README.md) · [文档分类](docs/README.md) · [源码地图](../docs/仓库导览.md) · [算法入口](../docs/算法与评估.md)
+
 ## 使用与开发入口
 
 - [下载电脑端与打开网页](../README.md#应用下载)
@@ -20,10 +22,10 @@
 | [web/](web/) | 手机/电脑网页、PWA、波形与操作界面 |
 | [android/](android/README.md) | Android 试用客户端、资源与构建工具 |
 | [cloud_model/](cloud_model/) | 云端模型适配器及固定版本依赖；[来源](cloud_model/SOURCE.json) |
-| [research/](research/) | 离线 QRS/RR、HRV 评估，不进入生产部署包 |
-| [deploy/](deploy/) | 云端、Windows 打包和升级工具 |
+| [research/](research/README.md) | 离线 QRS/RR、HRV 评估与复跑入口，不进入生产部署包 |
+| [deploy/](deploy/README.md) | 按目标查找云端、Windows 打包和升级工具 |
 | [tests/](tests/) | Python、网页脚本与 Windows 启动器检查 |
-| [docs/](docs/) | 当前设计、连接说明与开发进度 |
+| [docs/](docs/README.md) | 使用、部署进度与历史流程分类 |
 | [docs/archive/](docs/archive/README.md) | 历史技术方案、阶段验证 |
 
 根目录 `.cmd`、`.ps1`、连接及验证脚本保持原路径，按完整使用说明运行。`requirements*.txt` 仍放在模块根目录。测试方式统一见 [贡献指南](../CONTRIBUTING.md#检查与实物联调)。
