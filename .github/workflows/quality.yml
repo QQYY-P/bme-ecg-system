@@ -30,8 +30,10 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           python-version: '3.12'
-      - run: python -m unittest discover -s tools -p 'test_repository_policy.py' -v
+      - run: python -m unittest discover -s tools -p 'test_*.py' -v
       - run: python tools/check_repository.py
+      - run: python tools/check_docs.py
+      - run: python tools/sync_docs.py --check
 
   python:
     name: Python (${{ matrix.suite }})
