@@ -16,7 +16,7 @@ ROOT=Path(__file__).resolve().parent
 PROJECT=ROOT.parent
 WEB=PROJECT/'web'
 ASSETS=('index.html','app.js','workspace.js','devices.js','measurement.js','mobile.js',
-        'physiology.js','physiology.css',
+        'physiology.js','physiology.css','experience_core.js','experience.js','experience.css',
         'connection.js','desktop_core.js','desktop.js','desktop.css',
         'style.css','workspace.css','measurement.css','mobile.css','pwa.css',
         'device-manager.html','device-manager.js','device-manager.css',
@@ -110,7 +110,7 @@ def main():
             if not key.exists(): password.unlink()
             raise
     output=ROOT/'dist';output.mkdir(exist_ok=True)
-    signed=build/'ecg-records-1.0.0.apk'
+    signed=build/'ecg-records-1.0.2.apk'
     signing_env=os.environ.copy()
     signing_env['ECG_APK_SIGNING_PASSWORD']=password.read_text(encoding='ascii').strip()
     run(java,'-jar',tools/'lib/apksigner.jar','sign','--ks',key,'--ks-key-alias','ecg-release',

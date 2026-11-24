@@ -2,12 +2,13 @@
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
 function harness() {
   const elements=new Map(); let sequence=0;
-  const document={getElementById:element,querySelectorAll:()=>[],addEventListener(){},
+  const document={getElementById:element,querySelectorAll:()=>[],listeners:{},addEventListener(name,fn){this.listeners[name]=fn;},
     createElement:tag=>element(tag+'-'+(++sequence)),activeElement:null,documentElement:{dataset:{}}};
   function element(id) {
-    if(!elements.has(id)) elements.set(id,{textContent:'',hidden:false,value:'',width:100,dataset:{},attributes:{},children:[],
+    if(!elements.has(id)) elements.set(id,{textContent:'',hidden:false,value:'',width:100,dataset:{},attributes:{},children:[],listeners:{},
+      addEventListener(name,fn){this.listeners[name]=fn;},showModal(){this.open=true;},
       classList:{add(){},remove(){},toggle(){}},setAttribute(k,v){this.attributes[k]=v;},removeAttribute(k){delete this.attributes[k];},
-      replaceChildren(){this.children=[];this.textContent='';},reset(){},close(){this.open=false;this.onclose?.();},showModal(){this.open=true;},focus(){document.activeElement=this;},click(){return this.onclick?.();},
+      replaceChildren(){this.children=[];this.textContent='';},reset(){},close(){this.open=false;this.onclose?.();},focus(){document.activeElement=this;},click(){return this.onclick?.() ?? this.listeners.click?.();},
       getBoundingClientRect(){return {width:0}},append(...children){this.children.push(...children);}});
     return elements.get(id);
   }
@@ -18,6 +19,7 @@ function harness() {
     sessionStorage:{getItem:()=>'',removeItem(){},setItem(){}},ResizeObserver:class{observe(){}},
     URLSearchParams,AbortSignal,console,confirm:()=>true,fetch:async()=>({ok:false}),setTimeout,clearTimeout,setInterval(){}});
   const root=path.join(__dirname,'..','web');
+  vm.runInContext(fs.readFileSync(path.join(root,'experience_core.js'),'utf8'),context);
   vm.runInContext(fs.readFileSync(path.join(root,'connection.js'),'utf8'),context);
   vm.runInContext(fs.readFileSync(path.join(root,'desktop_core.js'),'utf8'),context);
   vm.runInContext(fs.readFileSync(path.join(root,'devices.js'),'utf8'),context);
@@ -27,7 +29,8 @@ function harness() {
   const source=fs.readFileSync(path.join(root,'workspace.js'),'utf8');
   vm.runInContext(source.slice(0,source.indexOf('initialize();setInterval')),context);
   return {context,element,media,document,state:vm.runInContext('state',context),
-    loadMobile(){vm.runInContext(fs.readFileSync(path.join(root,'mobile.js'),'utf8'),context);}};
+    loadMobile(){vm.runInContext(fs.readFileSync(path.join(root,'mobile.js'),'utf8'),context);},
+    loadExperience(){vm.runInContext(fs.readFileSync(path.join(root,'experience.js'),'utf8'),context);}};
 }
 test('switching account clears text, device status, forms and pagination before fetch',()=>{
   const h=harness();h.state.user={id:'alice'};
@@ -267,7 +270,7 @@ test('polling mobile records does not fetch waves or navigate to results',async(
   h.context.api=async url=>({json:async()=>url.startsWith('/api/sessions')?{total:1,sessions:[{session_id:'first'}]}:{devices:[]}});
   await h.context.refresh();
   assert.equal(h.state.selected,'first');assert.equal(details,0);
-  assert.equal(h.element('workspace-shell').dataset.mobileView,'records');assert.equal(h.element('nav-results').disabled,false);
+  assert.equal(h.element('workspace-shell').dataset.mobileView,'records');assert.equal(h.element('nav-records').attributes['aria-current'],'page');
   h.element('sessions').children[0].onclick();
   assert.equal(h.element('workspace-shell').dataset.mobileView,'results');assert.equal(details,2);
 });
@@ -275,22 +278,22 @@ test('account view skips detail polling; returning to results refreshes and pres
   const h=harness();h.loadMobile();h.state.ready=true;h.state.selected='one';let details=0;
   h.context.loadWave=h.context.loadAnalysis=()=>details++;
   h.element('nav-account').onclick();assert.equal(h.context.MobileUI.needsDetail(),false);
-  h.element('nav-results').onclick();assert.equal(h.state.selected,'one');assert.equal(details,2);
-  assert.equal(h.element('nav-results').attributes['aria-current'],'page');
+  h.context.MobileUI.openResult();assert.equal(h.state.selected,'one');assert.equal(details,2);
+  assert.equal(h.element('nav-records').attributes['aria-current'],'page');
   assert.equal(h.document.activeElement,h.element('results-heading'));
 });
 test('empty selection cannot open results and disappearance returns mobile to records',()=>{
-  const h=harness();h.loadMobile();h.element('nav-results').onclick();
+  const h=harness();h.loadMobile();h.context.MobileUI.openResult();
   assert.equal(h.element('workspace-shell').dataset.mobileView,'records');
-  h.state.selected='one';h.element('nav-results').onclick();h.context.selectSession(null);
-  assert.equal(h.element('workspace-shell').dataset.mobileView,'records');assert.equal(h.element('nav-results').disabled,true);
+  h.state.selected='one';h.context.MobileUI.openResult();h.context.selectSession(null);
+  assert.equal(h.element('workspace-shell').dataset.mobileView,'records');assert.equal(h.context.MobileUI.openResult(),false);
 });
 test('account cleanup removes mobile errors and navigation from the previous account',()=>{
   const h=harness();h.loadMobile();h.element('nav-account').onclick();h.context.detailFeedback('private error',true);
   h.element('filter-error').textContent='old error';h.context.clearAccount();
   assert.equal(h.element('workspace-shell').dataset.mobileView,'records');
   assert.equal(h.element('detail-message').textContent,'');assert.equal(h.element('detail-feedback').hidden,true);
-  assert.equal(h.element('filter-error').textContent,'');assert.equal(h.element('nav-results').disabled,true);
+  assert.equal(h.element('filter-error').textContent,'');assert.equal(h.context.MobileUI.openResult(),false);
 });
 test('identical list updates retain the actual button and keyboard focus',()=>{
   const h=harness();h.state.sessions=[{session_id:'one',name:'A'}];h.state.total=1;
@@ -319,4 +322,119 @@ test('Android export passes only record and user identity to the system save flo
   const h=harness();h.document.documentElement.dataset.nativeApp='android';h.state.selected='session_1';h.state.user={id:'a'.repeat(32)};
   let called=false;h.context.api=()=>{called=true;};await h.element('download').onclick();
   assert.equal(called,false);assert.equal(h.context.location.href,'ecg-export://download/session_1?user='+'a'.repeat(32));
+});
+
+test('result chapter navigation moves focus as well as the visible scroll position',()=>{
+  const h=harness();let click,scrolled=false,prevented=false;
+  h.document.querySelectorAll=selector=>selector==='.result-shortcuts a'?[{
+    hash:'#physiology-panel',addEventListener(event,handler){if(event==='click')click=handler;}
+  }]:[];
+  const target=h.element('physiology-panel');target.scrollIntoView=()=>scrolled=true;
+  h.loadMobile();click({preventDefault(){prevented=true;}});
+  assert.equal(h.document.activeElement,target);assert.equal(target.attributes.tabindex,'-1');
+  assert.equal(scrolled,true);assert.equal(prevented,true);
+  target.hidden=true;scrolled=false;prevented=false;
+  click({preventDefault(){prevented=true;}});
+  assert.equal(scrolled,false);assert.equal(prevented,false);
+});
+
+test('phone canvas uses readable colors while retaining identical signal coordinates',()=>{
+  const h=harness(),paths=[],colors=[];
+  const canvas=h.element('chart');canvas.getBoundingClientRect=()=>({width:350,height:240});
+  const c=new Proxy({}, {get(target,key){
+    if(key==='moveTo'||key==='lineTo')return (...args)=>paths.push([key,...args]);
+    return target[key] || (()=>{});
+  },set(target,key,value){target[key]=value;if(key==='strokeStyle')colors.push(value);return true;}});
+  canvas.getContext=()=>c;h.state.selected='one';
+  h.state.wave={session:{session_id:'one'},start_sample:0,end_sample:720,points:[[0,1800],[360,2300],[720,1900]]};
+  h.context.draw();const phone=JSON.stringify(paths);assert.ok(colors.includes('#087f71'));
+  paths.length=colors.length=0;h.media.narrow.matches=false;h.context.draw();
+  assert.ok(colors.includes('#5ce2af'));assert.equal(JSON.stringify(paths),phone);
+  assert.equal(h.state.wave.points[1][1],2300);
+});
+
+test('device tab remains reachable without a measurement and preserves the selected record',()=>{
+  const h=harness();h.loadMobile();h.state.selected=null;
+  h.element('nav-devices').onclick();assert.equal(h.element('workspace-shell').dataset.mobileView,'devices');
+  assert.equal(h.document.activeElement,h.element('devices-heading'));assert.equal(h.context.MobileUI.needsDetail(),false);
+  h.state.selected='one';h.element('nav-records').onclick();assert.equal(h.state.selected,'one');
+});
+test('first-use guide opens for a new account, not for empty search results',()=>{
+  const h=harness();h.loadMobile();h.loadExperience();h.state.total=0;h.state.sessions=[];
+  h.context.UserExperience.listUpdated();assert.equal(h.element('first-steps').open,true);
+  h.context.clearAccount();h.state.filters={q:'no match'};
+  h.context.UserExperience.listUpdated();assert.equal(h.element('first-steps').open,false);
+});
+test('quick dates keep existing search/device filters and reset pagination',()=>{
+  const h=harness();h.loadMobile();h.loadExperience();let reloaded=0;h.context.reloadList=()=>reloaded++;
+  h.element('query').value='rest';h.element('filter-device').value='device-1';h.element('trash-filter').value='false';h.state.page=4;
+  h.context.UserExperience.quickRange(7);
+  assert.equal(h.state.filters.q,'rest');assert.equal(h.state.filters.device_id,'device-1');assert.equal(h.state.page,0);
+  assert.ok(h.state.filters.started_from);assert.ok(h.state.filters.started_before);assert.equal(reloaded,1);
+});
+test('refresh failure retains timestamps but marks previously read content as stale',()=>{
+  const h=harness();h.loadMobile();h.loadExperience();h.context.UserExperience.listUpdated();h.context.UserExperience.detailUpdated();
+  const before=h.element('records-updated').textContent.replace('列表更新于 ','');
+  h.context.UserExperience.listFailed();h.context.UserExperience.detailFailed();
+  assert.ok(h.element('records-updated').textContent.includes(before));assert.match(h.element('result-updated').textContent,/上次读取/);
+  h.context.clearAccount();assert.doesNotMatch(h.element('records-updated').textContent,/更新失败/);
+});
+test('a report captures the selected window, and account switching destroys the snapshot',()=>{
+  const h=harness();h.loadMobile();h.loadExperience();h.state.selected='one';h.state.user={id:'alice',username:'Alice'};
+  h.state.wave={session:{session_id:'one',name:'Private note',source:'serial',sample_count:1800,source_status:'complete',upload_status:'complete'},points:[[0,1]],start_sample:360,end_sample:720};
+  const create=h.document.createElement;let background;
+  h.document.createElement=tag=>{const e=create(tag);if(tag==='canvas'){
+    const context={fillRect(){background=this.fillStyle;},drawImage(){}};e.getContext=()=>context;e.toDataURL=()=> 'data:image/png;base64,AAAA';
+  }return e;};
+  h.context.UserExperience.openReport();const report=h.context.UserExperience.printDocument();
+  assert.ok(report.includes('Private note'));assert.match(report,/1.0–2.0 秒/);assert.match(report,/完整原始数据请导出 CSV/);
+  assert.ok(report.includes('data:image/png;base64,AAAA'));assert.equal(background,'#fbfdfc');
+  h.context.clearAccount();assert.equal(h.context.UserExperience.printDocument(),null);assert.equal(h.element('report-rows').children.length,0);assert.equal(h.element('report-name').textContent,'');
+});
+test('changing record invalidates a report before any replacement data is loaded',()=>{
+  const h=harness();h.loadMobile();h.loadExperience();h.state.selected='one';
+  h.state.wave={session:{session_id:'one'},points:[]};h.context.UserExperience.openReport();
+  h.context.selectSession('two');assert.equal(h.context.UserExperience.printDocument(),null);assert.equal(h.element('report-dialog').open,false);
+});
+test('device page does not expose another users current acquisition signal',()=>{
+  const h=harness();h.loadMobile();h.loadExperience();
+  h.context.renderDevices({devices:[{device_id:'one',connection:'online',state:'other_user',signal_text:'Other private state'}]});
+  const card=h.element('device-list').children[0];assert.ok(!card.children.some(c=>c.textContent.includes('Other private state')));
+  h.context.clearAccount();assert.equal(h.element('device-list').children.length,0);
+});
+test('password visibility resets when account/login state is cleared',()=>{
+  const h=harness();h.loadMobile();h.loadExperience();h.element('password').type='password';
+  h.element('toggle-password').click();assert.equal(h.element('password').type,'text');
+  h.context.clearAccount();assert.equal(h.element('password').type,'password');assert.equal(h.element('toggle-password').attributes['aria-pressed'],'false');
+});
+test('a failed analysis refresh cannot retain a completed result in summary or report',async()=>{
+  const h=harness();h.loadMobile();h.loadExperience();h.state.selected='one';h.state.analysis={session_id:'one',analysis_status:'complete'};
+  h.context.api=async()=>{throw new Error('offline');};await h.context.loadAnalysis();
+  assert.equal(h.state.analysis.analysis_status,'unavailable');assert.equal(h.element('model-result').hidden,true);assert.equal(h.element('analyze').disabled,true);
+});
+test('pull to refresh requires the top of records, a vertical gesture, and release',async()=>{
+  const h=harness();h.loadMobile();h.loadExperience();h.state.ready=true;let count=0;h.context.refresh=async()=>count++;
+  const target={closest:()=>null},start={touches:[{clientX:10,clientY:20}],target};
+  h.document.listeners.touchstart(start);h.document.listeners.touchmove({touches:[{clientX:10,clientY:115}]});h.document.listeners.touchend();
+  await Promise.resolve();assert.equal(count,1);
+  h.context.window.scrollY=50;h.document.listeners.touchstart(start);h.document.listeners.touchmove({touches:[{clientX:10,clientY:115}]});h.document.listeners.touchend();
+  assert.equal(count,1);
+});
+test('latest-record shortcut reloads the first page rather than opening an old page head',async()=>{
+  const h=harness();h.loadMobile();h.loadExperience();h.state.page=2;h.state.sessions=[{session_id:'old-page'}];
+  h.context.loadWave=h.context.loadAnalysis=()=>{};
+  h.context.refresh=async()=>{assert.equal(h.state.page,0);h.state.sessions=[{session_id:'latest'}];};
+  await h.element('latest-record').click();assert.equal(h.state.selected,'latest');
+  assert.equal(h.element('workspace-shell').dataset.mobileView,'results');
+});
+test('device polling preserves the focused record button',()=>{
+  const h=harness();h.loadMobile();h.loadExperience();const payload={devices:[{device_id:'device-1',connection:'online',state:'standby'}]};
+  h.context.renderDevices(payload);h.element('device-list').children[0].children[4].focus();
+  h.context.renderDevices(payload);assert.equal(h.document.activeElement.dataset.deviceId,'device-1');
+  assert.equal(h.document.activeElement,h.element('device-list').children[0].children[4]);
+});
+test('pull during automatic refresh does not duplicate requests or leave a release prompt stuck',async()=>{
+  const h=harness();h.loadMobile();h.loadExperience();h.state.ready=true;h.state.busy={};let calls=0;h.context.refresh=()=>calls++;
+  await h.context.UserExperience.refreshManually();assert.equal(calls,0);assert.match(h.element('pull-feedback').textContent,/同步/);
+  h.context.UserExperience.listUpdated();assert.equal(h.element('pull-feedback').textContent,'');
 });

@@ -27,8 +27,9 @@ class AndroidPackageTests(unittest.TestCase):
                 if value:self.ids.append(value)
         page=Elements();page.feed((ROOT/'web/index.html').read_text(encoding='utf-8'))
         self.assertEqual(len(page.ids),len(set(page.ids)))
-        for target in ('nav-records','desktop-nav-records','filter-panel','filters-toggle','account-heading','results-heading'):
+        for target in ('nav-records','nav-devices','nav-account','devices-heading','desktop-nav-records','filter-panel','filters-toggle','account-heading','results-heading','preview-report','report-dialog','report-print'):
             self.assertIn(target,page.ids)
+        self.assertNotIn('nav-results',page.ids)
 
     def test_sdk_zero_exit_with_skipped_packages_is_a_failure_and_confirmation_has_no_bom(self):
         scratch=ROOT/'android/work';scratch.mkdir(exist_ok=True)
