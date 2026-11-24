@@ -8,6 +8,7 @@
 
 - [下载电脑端与打开网页](../README.md#应用下载)
 - [快速开始](docs/快速开始.md)、[使用说明](docs/使用说明.md)、[故障排查](docs/故障排查.md)；[离线文本](README.txt) 自动生成，原文快照在历史目录。
+- [管理员账号管理](docs/使用说明.md#管理员账号管理待部署) — 搜索、筛选、创建、重置密码、停用/恢复及撤销登录；PR #29 已合并，公网及已发布 APK 待更新。
 - [当前进度及部署验证](docs/云端工作台迭代.md) — 功能、版本、备份与待验收项的统一入口。
 - [Windows 客户端构建](deploy/desktop/README.md)、[Linux 部署](deploy/linux/部署说明.txt)、[手机 HTTPS 访问](deploy/linux/手机公网访问说明.txt)
 - [Android 试用版下载与验收边界](../docs/手机端与安卓安装包.md)、[Android 工程与构建](android/README.md)
