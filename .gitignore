@@ -79,3 +79,6 @@
 *.exe
 *.bin
 
+# Transient local-link process state and demo messages.
+/树莓派心电终端/validation/local_link/
+/树莓派心电终端/validation/local_link_smoke/
