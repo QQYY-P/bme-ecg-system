@@ -23,6 +23,7 @@ from pydantic import BaseModel, ConfigDict, Field, AwareDatetime, model_validato
 
 from protocol import FS, decode_chunk, signal_origin, valid
 from cloud_model.engine import AnalysisService, AnalysisBusy
+from physiology_analysis import PhysiologyService, MAX_SAMPLES as MAX_PHYSIOLOGY_SAMPLES
 from auth_store import AuthStore, COOKIE, SESSION_SECONDS
 from workspace_store import WorkspaceStore
 from analysis_tasks import AnalysisQueue, FileLock, QueueFull
@@ -159,6 +160,7 @@ def create_app(data_dir=None, token=None, device_id=None, auth_enabled=None, coo
         raise ValueError('公网入口必须开启账号模式和安全登录 Cookie')
     identity = ContextVar('ecg_identity', default={'kind': 'legacy'})
     model_service = AnalysisService(data, os.getenv('ECG_MODEL', ''))
+    physiology_service = PhysiologyService(data)
 
     def connect():
         db = sqlite3.connect(database, timeout=10)
@@ -652,6 +654,49 @@ def create_app(data_dir=None, token=None, device_id=None, auth_enabled=None, coo
             total = item['sample_count']
             db.rollback()
             try: job = jobs.enqueue(session_id, digest, total, force=force, cached=cached, authorize=authorize)
+            except QueueFull as exc: raise HTTPException(429, str(exc)) from exc
+            except ValueError as exc: raise HTTPException(409, str(exc)) from exc
+        jobs.start()
+        return job
+
+    @app.get('/api/sessions/{session_id}/physiology')
+    def physiology(session_id: str, include_series: bool = False):
+        with closing(connect()) as db:
+            db.execute('BEGIN')
+            item = find_session(db, session_id)
+            metadata = json.loads(item['metadata'])
+            manifest = [dict(c) for c in db.execute('SELECT chunk_id,sha256,sample_count FROM chunks WHERE session_id=? ORDER BY chunk_id', (session_id,))]
+            digest = physiology_service.digest(metadata, item['complete'], manifest)
+        result = physiology_service.read(session_id, digest)
+        job = jobs.latest(session_id, kind='physiology')
+        if job and job['source_digest'] == digest:
+            result['task'] = job
+            if job['status'] in ('queued','running','failed'):
+                # A retry must not present an earlier result as its outcome.
+                result = physiology_service.response(session_id, job['status'], job['error'] or job['stage'], digest, task=job)
+        if not include_series:
+            result.pop('r_peaks', None)
+            result.pop('rr_intervals', None)
+        return result
+
+    @app.post('/api/sessions/{session_id}/physiology-jobs', status_code=202)
+    def enqueue_physiology(session_id: str, force: bool = False):
+        def authorize(db):
+            if auth_enabled and identity.get()['kind']=='device': require_device(db)
+            return find_session(db, session_id, active=True)
+        with lock, closing(connect()) as db:
+            db.execute('BEGIN')
+            item = authorize(db)
+            if not item['complete']: raise HTTPException(409, '请先完成上传和清单校验')
+            if not physiology_service.ready: raise HTTPException(409, 'QRS/RR 分析依赖尚未就绪')
+            total = item['sample_count']
+            if total > MAX_PHYSIOLOGY_SAMPLES: raise HTTPException(409, 'QRS/RR 暂仅支持不超过 100 万采样点的记录')
+            metadata = json.loads(item['metadata'])
+            manifest = [dict(c) for c in db.execute('SELECT chunk_id,sha256,sample_count FROM chunks WHERE session_id=? ORDER BY chunk_id', (session_id,))]
+            digest = physiology_service.digest(metadata, item['complete'], manifest)
+            cached = physiology_service.read(session_id, digest)['analysis_status'] in ('complete','ineligible')
+            db.rollback()
+            try: job = jobs.enqueue(session_id, digest, total, force=force, cached=cached, authorize=authorize, kind='physiology')
             except QueueFull as exc: raise HTTPException(429, str(exc)) from exc
             except ValueError as exc: raise HTTPException(409, str(exc)) from exc
         jobs.start()

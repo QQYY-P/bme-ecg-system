@@ -3,6 +3,7 @@ function clearAccount() {
   if(typeof resetDesktop==='function')resetDesktop();
   clearDevices();
   renderMeasurement(null);
+  physiologyUI?.clear();
   state.epoch++; state.listEpoch++; state.generation++; state.analysisGeneration++;
   state.ready=false; state.user=null; state.csrf=''; state.sessions=[]; state.selected=null;
   state.wave=null; state.analysis=null; state.analyzing=null; state.views.clear(); state.page=0;

@@ -22,6 +22,7 @@ function harness() {
   vm.runInContext(fs.readFileSync(path.join(root,'desktop_core.js'),'utf8'),context);
   vm.runInContext(fs.readFileSync(path.join(root,'devices.js'),'utf8'),context);
   vm.runInContext(fs.readFileSync(path.join(root,'measurement.js'),'utf8'),context);
+  vm.runInContext(fs.readFileSync(path.join(root,'physiology.js'),'utf8'),context);
   vm.runInContext(fs.readFileSync(path.join(root,'app.js'),'utf8'),context);
   const source=fs.readFileSync(path.join(root,'workspace.js'),'utf8');
   vm.runInContext(source.slice(0,source.indexOf('initialize();setInterval')),context);
@@ -35,6 +36,7 @@ test('switching account clears text, device status, forms and pagination before 
   for(const id of ['record-name','record-note','record-id','model-message']) assert.equal(h.element(id).textContent,'');
   assert.equal(h.element('content').hidden,true);assert.equal(h.element('session-count').textContent,'0');
   assert.equal(h.element('records-page').textContent,'1 / 1');
+  assert.equal(h.element('qrs-count').textContent,'—');assert.equal(h.element('physiology-analyze').disabled,true);
   assert.ok(!h.element('device-signal').textContent.includes('Alice'));assert.equal(h.state.user,null);
 });
 test('late 401 body cannot log out a newer account',async()=>{

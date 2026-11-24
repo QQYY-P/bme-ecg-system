@@ -16,6 +16,7 @@ ROOT=Path(__file__).resolve().parent
 PROJECT=ROOT.parent
 WEB=PROJECT/'web'
 ASSETS=('index.html','app.js','workspace.js','devices.js','measurement.js','mobile.js',
+        'physiology.js','physiology.css',
         'connection.js','desktop_core.js','desktop.js','desktop.css',
         'style.css','workspace.css','measurement.css','mobile.css','pwa.css',
         'device-manager.html','device-manager.js','device-manager.css',

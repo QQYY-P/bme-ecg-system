@@ -70,7 +70,7 @@ a:focus-visible,summary:focus-visible{outline:3px solid #76cfc1;outline-offset:3
   .model-name{font-size:16px}.model-note,.storage-note,.clock-note,.provenance-note,.reason-list,.quality-reasons{font-size:13px;color:#5d737a}
   .class-counts span,.input-counts span{font-size:13px}.input-counts strong{font-size:22px}
   .delivery dl{padding:0 16px}.delivery dl>div{font-size:14px;gap:12px}.delivery dt{color:#5c737c}
-  #beats-panel{order:8}.beat-table,.beat-table th,.beat-table caption,.beat-label{font-size:13px}
+  #physiology-panel{order:7}#beats-panel{order:8}.beat-table,.beat-table th,.beat-table caption,.beat-label{font-size:13px}
   .beat-pagination{font-size:14px}.beats-note,.beats-panel .panel-heading p{font-size:13px}
   .notice{font-size:14px;line-height:1.8;overflow-wrap:anywhere}.detail-feedback{font-size:16px}
   .empty{height:auto;min-height:300px}.empty p{font-size:14px}.empty .pill{white-space:normal}

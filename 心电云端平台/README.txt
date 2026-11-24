@@ -5,7 +5,7 @@ Windows 免安装电脑端 1.1.0：解压后双击“心电工作台.exe”，�
 
 多设备云端主平台：已加入独立设备凭据、授权用户、启停及凭据轮换、按设备筛选和手机/电脑设备管理页，随 2026-11-23 工作台源码包部署。管理员从工作台进入“设备管理”；树莓派可通过 ECG_CLOUD_URL 直连现有 HTTPS 云端。接入步骤与兼容策略见 docs/云端工作台迭代.md；多台实体终端联调仍待完成。
 
-QRS/RR、HRV和性能评估：已分享的报告在仓库 docs/algorithm-validation/report.html，数值在同目录 report.json；本地重新运行默认输出到 outputs/qrs-hrv-evaluation/，该目录不加入Git。使用MIT-BIH 10条记录各前5分钟，不修改原始数据或模型；不是全库、树莓派或临床验证。NN统计额外要求明确窦性节律；手机工作台尚未新增HRV卡片。复跑命令与详细边界见 docs/云端工作台迭代.md 对应小节。
+QRS/RR、HRV和性能评估：已分享的报告在仓库 docs/algorithm-validation/report.html，数值在同目录 report.json；本地重新运行默认输出到 outputs/qrs-hrv-evaluation/，该目录不加入Git。使用MIT-BIH 10条记录各前5分钟，不修改原始数据或模型；不是全库、树莓派或临床验证。2026-11-24 新源码增加独立 QRS/RR 后台任务与手机/电脑卡片，尚未部署；没有可信 NN 标记时 HRV 显示不可用。复跑命令与详细边界见 docs/云端工作台迭代.md 对应小节。
 
 克隆后的离线实验（PowerShell，先在仓库根目录按根README创建.venv）：
   .\.venv\Scripts\python.exe -m pip install -r "心电云端平台/requirements-research.txt"
