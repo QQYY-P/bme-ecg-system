@@ -59,6 +59,32 @@ jobs:
       - name: Run the selected project in its own process
         run: xvfb-run -a python tools/run_checks.py --suite '${{ matrix.suite }}'
 
+  research:
+    name: Algorithm evaluation tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r '心电云端平台/requirements-research.txt'
+      - name: Check scoring, detector adapters and model replay without external ECG files
+        working-directory: 心电云端平台
+        run: |
+          python - <<'PY'
+          import sys, unittest
+          import wfdb, neurokit2, ts2vg
+          suite = unittest.defaultTestLoader.discover('tests', pattern='*benchmark*.py')
+          if not suite.countTestCases():
+              raise SystemExit('No algorithm tests discovered')
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          if not result.wasSuccessful() or result.skipped:
+              raise SystemExit('Algorithm tests failed or were skipped')
+          PY
+
   web:
     name: Web tests
     runs-on: ubuntu-24.04
@@ -119,7 +145,7 @@ jobs:
   gate:
     name: Quality gate
     if: ${{ always() }}
-    needs: [source, python, web, desktop, android]
+    needs: [source, python, research, web, desktop, android]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
