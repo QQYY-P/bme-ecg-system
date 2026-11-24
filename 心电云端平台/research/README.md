@@ -14,9 +14,10 @@
 
 ## 复跑入口
 
-先按 [根 README](../../README.md#开发环境) 创建环境，再按 [完整运行说明](../README.txt) 的“离线实验”步骤准备公开数据。数据放在仓库外；从 `心电云端平台/` 执行：
+先按 [根 README](../../README.md#开发环境) 创建环境。从 [MIT-BIH 1.0.0](https://physionet.org/content/mitdb/1.0.0/) 取得对应记录的 `.hea`、`.dat`、`.atr` 文件，保留数据许可和来源，放在仓库外。进入 `心电云端平台/` 执行：
 
 ```powershell
+..\.venv\Scripts\python.exe -m pip install -r requirements-research.txt
 ..\.venv\Scripts\python.exe -m research.evaluate_ecg --data "D:\datasets\mitdb" --records 100 101 103 105 200 201 207 208 231 232 --seconds 300
 ```
 
