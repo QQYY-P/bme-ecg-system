@@ -7,7 +7,7 @@
 ## 使用与开发入口
 
 - [下载电脑端与打开网页](../README.md#应用下载)
-- [安装、运行、模型开关与研究复跑](README.txt) — 保留完整操作步骤；其中标注日期的实测内容属于对应阶段。
+- [快速开始](docs/快速开始.md)、[使用说明](docs/使用说明.md)、[故障排查](docs/故障排查.md)；[离线文本](README.txt) 自动生成，原文快照在历史目录。
 - [当前进度及部署验证](docs/云端工作台迭代.md) — 功能、版本、备份与待验收项的统一入口。
 - [Windows 客户端构建](deploy/desktop/README.md)、[Linux 部署](deploy/linux/部署说明.txt)、[手机 HTTPS 访问](deploy/linux/手机公网访问说明.txt)
 - [Android 试用版下载与验收边界](../docs/手机端与安卓安装包.md)、[Android 工程与构建](android/README.md)
@@ -21,7 +21,7 @@
 | `*_store.py`、[device_routes.py](device_routes.py)、[analysis_tasks.py](analysis_tasks.py) | 账号、设备、记录与持久分析任务 |
 | [web/](web/) | 手机/电脑网页、PWA、波形与操作界面 |
 | [android/](android/README.md) | Android 试用客户端、资源与构建工具 |
-| [cloud_model/](cloud_model/) | 云端模型适配器及固定版本依赖；[来源](cloud_model/SOURCE.json) |
+| [cloud_model/](cloud_model/README.md) | 云端模型适配器及固定版本依赖；[来源](cloud_model/SOURCE.json) |
 | [physiology_analysis.py](physiology_analysis.py) | 独立 QRS/RR 后台分析、结果版本与输入门控 |
 | [research/](research/README.md) | 离线评估；其中检测与统计两个纯函数模块供云端复用 |
 | [deploy/](deploy/README.md) | 按目标查找云端、Windows 打包和升级工具 |
@@ -29,7 +29,7 @@
 | [docs/](docs/README.md) | 使用、部署进度与历史流程分类 |
 | [docs/archive/](docs/archive/README.md) | 历史技术方案、阶段验证 |
 
-根目录 `.cmd`、`.ps1`、连接及验证脚本保持原路径，按完整使用说明运行。`requirements*.txt` 仍放在模块根目录。测试方式统一见 [贡献指南](../CONTRIBUTING.md#检查与实物联调)。
+根目录 `.cmd`、`.ps1`、连接及验证脚本按[辅助工具索引](tools/README.md)分类查阅，保留原运行路径。`requirements*.txt` 仍放在模块根目录。测试方式统一见 [贡献指南](../CONTRIBUTING.md#检查与实物联调)。
 
 `work/`、`outputs/`、`deploy/dist/`、`.cloud_private/` 和采集数据属于本地运行内容，不加入 Git；下载包通过 Release 或正式网页分发。
 

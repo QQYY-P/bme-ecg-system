@@ -6,7 +6,7 @@
 
 ## 使用与开发入口
 
-- [安装依赖、运行与排错](README.txt) — 完整步骤及各阶段验证记录；仍随原有发布包提供。
+- [快速开始](docs/快速开始.md)、[使用说明](docs/使用说明.md)、[故障排查](docs/故障排查.md)；[离线文本](README.txt) 自动生成，原文快照在历史目录。
 - [待机与日常使用](docs/设备待机与日常使用.md)、[固定 IP 连接](docs/固定IP连接说明.txt)
 - [STM32 七字节协议](docs/STM32串口对接说明.txt)、[实采预处理](docs/实采预处理说明.txt)、[状态与信号质量](docs/状态与信号质量说明.txt)
 - [分类接入](docs/三分类实时接入说明.txt)、[分类呈现与复核](docs/分类呈现与复核说明.txt)、[记录与设置](docs/数据管理与设置说明.txt)
@@ -20,12 +20,12 @@
 | [app.py](app.py)、`start-*.sh` | 程序与启动入口 |
 | [ui/](ui/) | 波形、历史记录及设置界面 |
 | [acquisition.py](acquisition.py)、[protocol.py](protocol.py)、[preprocessing.py](preprocessing.py) | 采集、解析与信号预处理 |
-| [cardioedge/](cardioedge/) | 当前模型、NumPy 推理适配及[第三方说明](cardioedge/THIRD_PARTY_NOTICES.txt) |
+| [cardioedge/](cardioedge/README.md) | 当前模型、NumPy 推理适配及[第三方说明](cardioedge/THIRD_PARTY_NOTICES.txt) |
 | [cloud/](cloud/) | 上传、设备状态与云端协议 |
-| [tools/](tools/) | 部署、打包、性能检查与验证工具 |
-| [tests/](tests/)、[validation/](validation/) | 软件回归及公开模型验证资料 |
+| [工具分类](tools/README.md) | 部署、打包、性能检查与验证工具 |
+| [tests/](tests/)、[验证资料](validation/README.md) | 软件回归及验证资料入口 |
 | [docs/](docs/README.md) | 按日常使用、采集分析与阶段记录分类 |
-| [models/](models/) | 保留的旧模型原型；与当前 `cardioedge/` 分开 |
+| [models/](models/README.md) | 保留的旧模型原型；与当前 `cardioedge/` 分开 |
 
 早期设计、课程阶段要求与无模型框图统一放在 [历史资料](docs/archive/README.md)。原文中的“三字节协议”“尚未完成云端”等描述属于对应阶段；现行对接以 [共同接口约定](../docs/接口约定.md) 和统一开发进度为准。
 
