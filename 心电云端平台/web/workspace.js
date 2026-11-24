@@ -24,7 +24,7 @@ function clearAccount() {
   $('input-summary').hidden=true; $('beats-panel').hidden=true; $('marker-legend').hidden=true;
   $('skip-reasons').replaceChildren(); $('chart').width=$('chart').width;
   $('record-form').reset(); $('new-user-form').reset(); $('password-form').reset(); renderDevice(null); notice('');
-  $('filters').reset(); for(const dialog of document.querySelectorAll('dialog[open]')) dialog.close();
+  $('filters').reset(); experience('clear'); for(const dialog of document.querySelectorAll('dialog[open]')) dialog.close();
   draw();
 }
 function showLogin(message='') {

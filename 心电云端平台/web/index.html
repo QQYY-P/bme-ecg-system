@@ -16,12 +16,15 @@
   <script src="/assets/desktop_core.js" defer></script>
   <link rel="stylesheet" href="/assets/mobile.css">
   <link rel="stylesheet" href="/assets/physiology.css">
+  <link rel="stylesheet" href="/assets/experience.css">
+  <script src="/assets/experience_core.js" defer></script>
   <script src="/assets/physiology.js" defer></script>
   <script src="/assets/measurement.js" defer></script>
   <script src="/assets/devices.js" defer></script>
   <script src="/assets/app.js" defer></script>
   <script src="/assets/workspace.js" defer></script>
   <script src="/assets/mobile.js" defer></script>
+  <script src="/assets/experience.js" defer></script>
   <script src="/assets/pwa.js" defer></script>
   <script src="/assets/desktop.js" defer></script>
 </head>
@@ -33,22 +36,24 @@
   <dialog id="pwa-help" aria-labelledby="pwa-title"><img src="/assets/icons/icon-192.png" alt=""><h2 id="pwa-title">安装心电记录</h2><p id="pwa-instructions"></p><p class="pwa-hint">沿用已有账号。联网查看自己的采集记录与分析结果，无需重新注册。</p><p id="pwa-feedback" role="status"></p><div class="dialog-actions"><button id="pwa-help-close" class="button secondary" type="button">稍后再说</button><button id="pwa-confirm" class="button primary" type="button" hidden>安装应用</button></div></dialog>
   <section id="login-panel" class="login-shell" hidden>
     <form id="login-form" class="panel login-card">
-      <span class="brandmark" aria-hidden="true">⌁</span><p class="eyebrow">ECG WORKSPACE</p>
+      <span class="brandmark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M4 17h6l3-9 6 17 3-8h6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><p class="eyebrow">ECG WORKSPACE</p>
       <h1>你的心电记录</h1><p class="muted">登录后查看自己的采集记录、波形与分析结果。</p>
       <label for="username">账号</label><input id="username" autocomplete="username" required maxlength="32" autocapitalize="none" spellcheck="false">
-      <label for="password">密码</label><input id="password" type="password" autocomplete="current-password" required maxlength="128">
+      <label for="password">密码</label><div class="password-entry"><input id="password" type="password" autocomplete="current-password" required maxlength="128"><button id="toggle-password" type="button" class="button secondary" aria-controls="password" aria-pressed="false">显示</button></div>
       <p id="login-error" class="form-error" role="alert"></p><button id="login-submit" class="button primary" type="submit">登录工作台</button>
-      <p class="small muted">账号由项目管理员创建。此系统用于课程研究。</p><button id="login-download" type="button" class="login-download">下载 Windows 免安装版</button>
+      <p class="small muted">账号由项目管理员创建。此系统用于课程研究。</p><button id="login-help" type="button" class="text-action">没有账号或忘记密码？</button><button id="login-download" type="button" class="login-download">下载 Windows 免安装版</button>
     </form>
   </section>
   <div id="workspace-shell" hidden>
   <nav class="desktop-nav" aria-label="工作台导航"><div class="desktop-brand"><img src="/assets/icons/icon-192.png" width="33" height="33" alt="">心电工作台</div><button id="desktop-nav-records" type="button" class="active">▤　我的记录</button><button id="nav-device" type="button">▧　设备状态</button><button id="nav-download" type="button">↓　电脑客户端</button><small>ECG WORKSPACE<br>记录 · 分析 · 回看<br>课程研究用途</small></nav>
-  <header class="topbar"><div class="brand"><span class="brandmark" aria-hidden="true">⌁</span><div><strong>心电数据工作台</strong><span class="subtitle">ECG · 端云协同课程演示</span></div></div><div class="topright"><span id="deployment-label" class="pill neutral">电脑联调</span><span id="service" class="connection">正在连接…</span><button id="settings" class="iconbutton" aria-label="设置访问凭证">设置</button></div></header>
+  <header class="topbar"><div class="brand"><span class="brandmark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M4 17h6l3-9 6 17 3-8h6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>心电数据工作台</strong><span class="subtitle">ECG · 端云协同课程演示</span></div></div><div class="topright"><span id="deployment-label" class="pill neutral">电脑联调</span><span id="service" class="connection">正在连接…</span><button id="settings" class="iconbutton" aria-label="设置访问凭证">设置</button></div></header>
   <main>
-    <div class="account-strip"><h1 class="mobile-only" tabindex="-1" id="account-heading">账号</h1><span id="account-name">本机工作台</span><p class="mobile-only muted">管理登录与设备。测量记录按账号保存。</p><div><a id="manage-devices" class="button secondary" href="/devices" hidden>设备管理</a><button id="admin" class="button secondary" hidden>账号与待分配记录</button><button id="change-password" class="button secondary" hidden>修改密码</button><button id="account-install" class="button secondary mobile-only" type="button">安装到手机</button><button id="logout" class="button secondary" hidden>退出登录</button></div></div>
-    <div class="page-heading"><div><p class="eyebrow">DATA WORKSPACE</p><h1 id="records-heading" tabindex="-1">我的心电记录</h1><p class="muted">选择一次测量，查看波形、信号质量与分析结果。</p></div><div class="page-actions"><button id="filters-toggle" class="button secondary" aria-expanded="false" aria-controls="filter-panel">筛选记录</button><button id="refresh" class="button secondary">↻ 刷新记录</button></div></div>
+    <div class="account-strip"><h1 class="mobile-only" tabindex="-1" id="account-heading">我的</h1><span id="account-name">本机工作台</span><p class="mobile-only muted">管理登录与设备。测量记录按账号保存。</p><div><a id="manage-devices" class="button secondary" href="/devices" hidden>设备管理</a><button id="admin" class="button secondary" hidden>账号与待分配记录</button><button id="change-password" class="button secondary" hidden>修改密码</button><button id="account-install" class="button secondary mobile-only" type="button">安装到手机</button><button id="my-help" class="button secondary" type="button">使用帮助与账号恢复</button><button id="logout" class="button secondary" hidden>退出登录</button></div><p id="app-version" class="muted"></p></div>
+    <details id="first-steps" class="first-steps panel mobile-only"><summary>第一次使用 · 如何获得测量记录</summary><p>手机用于查看记录，测量在采集设备端完成。</p><ol><li><strong>选对账号</strong><span>在树莓派终端选择与手机登录一致的本人账号。</span></li><li><strong>测量并上传</strong><span>在设备端完成测量、保存，再点击“上传并分析”。</span></li><li><strong>手机查看</strong><span>回到这里刷新，点开记录查看摘要和波形。</span></li></ol><p class="muted">没找到记录？先确认账号、上传状态和筛选条件。</p></details>
+    <section id="mobile-devices" class="mobile-only" aria-labelledby="devices-heading"><div class="page-heading"><div><h1 id="devices-heading" tabindex="-1">设备</h1><p class="muted">在设备端测量，在手机查看进度。</p></div><button id="refresh-devices" class="button secondary" type="button">刷新状态</button></div><p id="devices-feedback" class="muted" role="status">正在读取设备状态…</p><div id="device-list"></div><div class="panel device-guidance"><h2>设备连接排查</h2><ol><li>确认终端已开机并连接网络。</li><li>在设备屏幕查看采集程序是否运行。</li><li>确认本人账号已获设备授权。</li></ol><p>终端在线只表示正在上报，不代表电极接触或信号质量合格。</p><button id="device-help" class="button secondary" type="button">查看使用帮助</button></div></section>
+    <div class="page-heading"><div><p class="eyebrow">DATA WORKSPACE</p><h1 id="records-heading" tabindex="-1">我的心电记录</h1><p class="muted">选择一次测量，查看波形、信号质量与分析结果。</p></div><div class="page-actions"><button id="filters-toggle" class="button secondary" aria-expanded="false" aria-controls="filter-panel">筛选记录</button><button id="refresh" class="button secondary" aria-label="刷新记录"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6 7a7 7 0 0 1 12-1l2 2M4 16l2 2a7 7 0 0 0 12-1"/></svg><span>刷新记录</span></button></div></div>
     <div id="notice" class="notice" role="status" hidden></div>
-    <section id="device-summary" class="panel device-card" aria-label="设备状态"><div><span class="eyebrow">采集终端</span><h2 id="device-state">尚未收到设备状态</h2></div><p id="device-signal" class="muted">设备状态与历史记录独立更新</p><span id="device-seen" class="small muted"></span></section>
+    <section id="device-summary" class="panel device-card" aria-label="设备状态"><div><span class="eyebrow">采集终端</span><h2 id="device-state">尚未收到设备状态</h2></div><p id="device-signal" class="muted">设备状态与历史记录独立更新</p><span id="device-seen" class="small muted"></span><button id="open-devices" class="button secondary mobile-only" type="button">查看设备</button></section>
     <details id="filter-panel" class="filter-panel" open><summary>搜索与筛选 <span id="filter-summary">全部记录</span></summary>
     <form id="filters" class="filters panel">
       <label>搜索记录<input id="query" type="search" placeholder="名称、备注或编号" maxlength="100"></label>
@@ -60,6 +65,7 @@
       <p id="filter-error" class="form-error" role="alert" hidden></p>
     </form>
     </details>
+    <div class="record-shortcuts mobile-only"><div class="quick-filters" role="group" aria-label="快捷日期筛选"><button id="quick-today" class="button secondary" type="button" aria-pressed="false">今天</button><button id="quick-week" class="button secondary" type="button" aria-pressed="false">近七天</button><button id="latest-record" class="button secondary" type="button" disabled>查看最近一条</button></div><p class="muted">按设备记录的采集日期筛选；下方按上传登记由新到旧排列。</p><p id="records-updated" class="muted"></p><p id="pull-feedback" class="muted" role="status"></p></div>
     <div class="workspace">
       <aside class="sessions-panel panel"><div class="panel-heading"><h2>采集记录 <span id="session-count" class="count">0</span></h2><span class="small muted">每页 20 条</span></div><div id="sessions" class="sessions"><p class="empty-hint">正在读取记录…</p></div><div class="record-pagination"><button id="records-prev" class="button secondary">上一页</button><span id="records-page">1 / 1</span><button id="records-next" class="button secondary">下一页</button></div></aside>
       <section class="detail">
@@ -68,33 +74,20 @@
         <div id="empty" class="panel empty"><span class="empty-symbol">⌁</span><h2>等待你的测量记录</h2><p>在终端选择本人的账号，完成测量。<br>保存后点击“上传并分析”，再在手机刷新记录。<br>记录到达后，可查看测量总结、波形和云端分析。</p><span class="pill neutral">离线记录保留在终端，联网后可重试上传</span></div>
         <div id="content" hidden>
           <div class="record-tools"><p id="record-note" class="muted"></p><div><button id="edit-record" class="button secondary">名称与备注</button><button id="trash-record" class="button secondary">移入回收站</button></div></div>
-          <div class="record-header"><div><div class="record-title"><h2 id="record-name">采集会话</h2><span id="source" class="pill"></span><span id="provenance-kind" class="pill neutral"></span></div><p id="record-id" class="record-id"></p></div><button id="download" class="button secondary">下载完整 CSV</button></div>
-          <nav class="mobile-only result-shortcuts" aria-label="结果章节"><a href="#measurement-panel">测量总结</a><a href="#wave-panel">原始波形</a><a href="#physiology-panel">QRS/RR</a><a href="#analysis-panel">模型分析</a></nav>
-          <div class="stats"><div class="stat panel"><span>已接收采样点</span><strong id="samples">—</strong><small id="chunks">—</small></div><div class="stat panel"><span>记录时长</span><strong id="duration">—</strong><small>按采样点数计算</small></div><div class="stat panel"><span>采样率</span><strong>360 <em>Hz</em></strong><small>单通道原始心电</small></div><div class="stat panel"><span>有效采样占比</span><strong id="valid">—</strong><small>依据 ADC 范围及记录标记</small></div></div>
+          <div class="record-header"><div><div class="record-title"><h2 id="record-name">采集会话</h2><span id="source" class="pill"></span><span id="provenance-kind" class="pill neutral"></span></div><p id="record-id" class="record-id"></p></div><div class="record-export"><button id="preview-report" class="button primary" type="button" disabled>预览报告</button><button id="download" class="button secondary">下载完整 CSV</button></div></div><p id="result-updated" class="muted"></p>
+          <nav class="mobile-only result-shortcuts" aria-label="结果章节"><a href="#measurement-panel">测量总结</a><a href="#wave-panel">原始波形</a><a href="#physiology-panel">心搏与间期</a><a href="#analysis-panel">心搏分类</a></nav>
+
           <section id="measurement-panel" class="panel measurement-panel" hidden aria-labelledby="measurement-title">
-            <h2 id="measurement-title">本次测量总结</h2><p id="measurement-state" class="measurement-state" role="status"></p>
-            <dl class="measurement-grid"><div><dt>测量时长</dt><dd id="measurement-plan"></dd></div><div><dt>有效 RR 心率（终端）</dt><dd id="measurement-heart"></dd></div><div><dt>实采质量统计（终端）</dt><dd id="measurement-quality"></dd></div><div><dt>已保存分类（终端）</dt><dd id="measurement-class"></dd></div></dl>
-            <p id="measurement-next" class="measurement-next"></p><p class="measurement-caption">采样时长不包含断流等待时间。质量通过时间逐点累计，心率按有效实采 RR 间期加权。有效采样比例不等同可分析比例；N 类不代表临床正常，分类用于课程研究。</p>
+            <h2 id="measurement-title">本次测量总结</h2><div id="record-progress" class="record-progress" role="status"><strong id="process-title">正在读取记录</strong><p id="process-next"></p></div>
+            <dl class="measurement-grid"><div><dt>测量时长</dt><dd id="measurement-plan"></dd></div><div><dt>心率 · 终端统计</dt><dd id="measurement-heart"></dd></div><div><dt>有效信号 · 终端统计</dt><dd id="measurement-quality"></dd></div><div><dt>心搏分类 · 终端保存</dt><dd id="measurement-class"></dd></div></dl>
+            <dl class="analysis-progress"><div><dt>心搏分类 · 云端</dt><dd id="classification-progress">正在读取</dd></div><div><dt>心搏与间期 · 云端</dt><dd id="physiology-progress">正在读取</dd></div></dl><details class="measurement-notes"><summary>统计口径与说明</summary><p id="measurement-state" class="measurement-state"></p><p id="measurement-next" class="measurement-next"></p><p class="measurement-caption">采样时长不包含断流等待时间。质量通过时间逐点累计，心率按有效实采 RR 间期加权。有效采样比例不等同可分析比例；N 类不代表临床正常，分类用于课程研究。</p></details><p class="mobile-only research-caption">课程研究用途，分类结果不作为临床诊断。</p>
           </section>
           <div id="wave-panel" class="wave-panel"><div class="wave-heading"><div><span class="wave-dot"></span><strong>原始波形</strong><span id="wave-origin" class="wave-note"></span></div><div class="wave-controls"><label for="window">窗口</label><select id="window"><option value="5">5 秒</option><option value="10">10 秒</option><option value="30">30 秒</option><option value="60">60 秒</option></select><label for="amplitude">幅度</label><select id="amplitude"><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option></select><button id="wave-focus" class="follow" aria-pressed="false">专注波形</button><button id="follow" class="follow active" aria-pressed="true">跟随最新</button></div></div><div class="chart-wrap"><canvas id="chart" aria-label="原始ADC波形，横轴为接收采样序号对应秒数，模型R点可在下方心搏明细中定位" role="img"></canvas><div id="chart-empty" hidden>该范围暂无数据</div></div><div id="marker-legend" class="marker-legend" hidden><label><input id="show-markers" type="checkbox" checked> 显示模型 R 点</label><span class="legend-N">● N</span><span class="legend-S">● S</span><span class="legend-V">● V</span><span id="marker-count"></span></div><div class="wave-footer"><span>纵轴：ADC 原始值</span><span>无效点与段边界断开显示 · 标记不改变原始数据</span></div></div>
           <div class="history panel"><label for="position">历史位置</label><button id="wave-previous" class="button secondary" type="button" aria-label="向前一个波形窗口">← 前段</button><input id="position" type="range" min="0" max="1" value="1" step="1" aria-label="历史波形结束位置"><span id="position-label">—</span><button id="wave-next" class="button secondary" type="button" aria-label="向后一个波形窗口">后段 →</button></div>
           <div class="bottom-grid">
-            <section class="panel delivery">
-              <div class="panel-heading"><h2>上传与存储</h2><span id="upload-status" class="pill"></span></div>
-              <dl>
-                <div><dt>设备</dt><dd id="device">—</dd></div>
-                <div><dt>采集开始（设备记录）</dt><dd id="capture-time">—</dd></div>
-                <div><dt id="first-upload-label">云端上传登记</dt><dd id="first-upload">—</dd></div>
-                <div><dt id="last-upload-label">云端最后收块</dt><dd id="received">—</dd></div>
-                <div><dt>源会话状态</dt><dd id="source-status">—</dd></div>
-              </dl>
-              <p id="provenance-note" class="provenance-note" hidden></p>
-              <p id="clock-note" class="clock-note" role="status">设备时钟尚未核准；采集日期保留原始记录。</p>
-              <p class="storage-note">时间显示为本机时区；上传登记不代表采集时刻。接收确认表示数据已保存，重复上传不会增加点数。</p>
-            </section>
             <section id="analysis-panel" class="panel model">
-              <div class="panel-heading"><h2>模型分析</h2><span id="model-status" class="pill neutral">未接入模型</span></div>
-              <div class="model-body">
+              <div class="panel-heading"><h2>心搏分类 <small>云端</small></h2><span id="model-status" class="pill neutral">未接入模型</span></div>
+              <div class="model-body"><details class="term-help"><summary>N / S / V 是什么意思？</summary><p>这是模型的三组心搏分类标签。N 类包含正常及部分传导异常心搏；S、V 表示模型归入相应异位心搏组，需结合原始波形复核。N 不等于“正常”，分数不是诊断概率。</p></details>
                 <p id="model-name" class="model-name">此阶段只验证数据链路</p><p id="model-message" role="status">分类结果与模型复核暂为空</p>
                 <div id="model-result" hidden><strong id="beat-count"></strong><div class="class-counts"><div><span>N 类</span><strong id="class-N">0</strong></div><div><span>S 类</span><strong id="class-S">0</strong></div><div><span>V 类</span><strong id="class-V">0</strong></div></div><p id="model-time" class="small muted"></p></div>
                 <div id="input-summary" class="input-summary" hidden>
@@ -108,8 +101,8 @@
             </section>
           </div>
           <section id="physiology-panel" class="panel">
-            <div class="panel-heading"><h2>QRS / RR 分析</h2><span id="physiology-status" class="pill neutral">待分析</span></div>
-            <div class="physiology-body">
+            <div class="panel-heading"><h2>心搏与间期 <small>QRS / RR · 云端</small></h2><span id="physiology-status" class="pill neutral">待分析</span></div>
+            <div class="physiology-body"><details class="term-help"><summary>这些指标怎么看？</summary><p>QRS 用于定位心搏，RR 是相邻有效心搏之间的间隔。心率由有效间隔换算；“质量通过比例”只表示算法接受的信号覆盖。缺少可靠的正常窦性间期标记时，不提供 HRV。</p></details>
               <p id="physiology-message" role="status"></p>
               <div id="physiology-metrics" hidden>
                 <p>有效数据时长 <strong id="qrs-effective">—</strong></p>
@@ -126,6 +119,21 @@
               <p id="physiology-version"></p>
             </div>
           </section>
+
+          <details id="record-details" class="panel record-details" open><summary>详细信息 · 采样与上传</summary>          <div class="stats"><div class="stat panel"><span>已接收采样点</span><strong id="samples">—</strong><small id="chunks">—</small></div><div class="stat panel"><span>记录时长</span><strong id="duration">—</strong><small>按采样点数计算</small></div><div class="stat panel"><span>采样率</span><strong>360 <em>Hz</em></strong><small>单通道原始心电</small></div><div class="stat panel"><span>有效采样占比</span><strong id="valid">—</strong><small>依据 ADC 范围及记录标记</small></div></div>            <section class="panel delivery">
+              <div class="panel-heading"><h2>上传与存储</h2><span id="upload-status" class="pill"></span></div>
+              <dl>
+                <div><dt>设备</dt><dd id="device">—</dd></div>
+                <div><dt>采集开始（设备记录）</dt><dd id="capture-time">—</dd></div>
+                <div><dt id="first-upload-label">云端上传登记</dt><dd id="first-upload">—</dd></div>
+                <div><dt id="last-upload-label">云端最后收块</dt><dd id="received">—</dd></div>
+                <div><dt>源会话状态</dt><dd id="source-status">—</dd></div>
+              </dl>
+              <p id="provenance-note" class="provenance-note" hidden></p>
+              <p id="clock-note" class="clock-note" role="status">设备时钟尚未核准；采集日期保留原始记录。</p>
+              <p class="storage-note">时间显示为本机时区；上传登记不代表采集时刻。接收确认表示数据已保存，重复上传不会增加点数。</p>
+            </section>
+</details>
           <section id="beats-panel" class="panel beats-panel" hidden>
             <div class="panel-heading"><div><h2>心搏明细 <span id="beats-total" class="count"></span></h2><p class="muted">点击时间定位原始波形 · 每页 10 搏</p></div><span id="selected-beat" class="small muted" role="status"></span></div>
             <div class="beat-actions"><label>分类<select id="beat-filter"><option value="all">全部心搏</option><option value="SV">S / V 类</option><option value="N">N 类</option><option value="S">S 类</option><option value="V">V 类</option><option value="review">需复核</option></select></label><button id="beat-previous" class="button secondary">上一心搏</button><button id="beat-next" class="button secondary">下一心搏</button></div><p id="beats-empty" hidden>此筛选条件下没有心搏；可切回“全部心搏”。</p>
@@ -140,8 +148,10 @@
     </div>
     <footer><span id="service-location">课程演示 · 本地服务</span> <span>时间轴由接收采样编号换算，跨中断不代表精确连续时间。有效采样比例不等同于诊断质量。</span></footer>
   </main>
-  <nav id="mobile-nav" class="mobile-nav" aria-label="主导航"><button id="nav-records" type="button" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg><span>记录</span></button><button id="nav-results" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg><span>结果</span></button><button id="nav-account" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg><span>账号</span></button></nav>
+  <nav id="mobile-nav" class="mobile-nav" aria-label="主导航"><button id="nav-records" type="button" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg><span>记录</span></button><button id="nav-devices" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg><span>设备</span></button><button id="nav-account" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg><span>我的</span></button></nav>
   </div>
+  <dialog id="help-dialog" aria-labelledby="help-title"><h2 id="help-title">使用帮助</h2><h3>没有账号或忘记密码</h3><p>请联系为你创建账号的项目管理员或课程负责人，提供账号名称，申请创建或重置密码。不要发送原密码或设备凭据。</p><h3>找不到刚测的记录</h3><p>确认设备端选择了本人账号，记录已保存并上传；在“记录”重置筛选后刷新。</p><h3>没有分析结果</h3><p>先核对上传是否完成，再查看对应分析卡片的条件与状态。数据不足或分析失败不代表正常。</p><h3>设备管理</h3><p>“设备”页查看你有权访问的设备状态。管理员可从“我的 → 设备管理”配置授权；安卓会打开系统浏览器并需独立登录。</p><div class="dialog-actions"><button id="help-close" class="button primary" type="button">知道了</button></div></dialog>
+  <dialog id="report-dialog" class="report-dialog" aria-labelledby="report-title"><div class="report-actions"><h2 id="report-title">测量报告预览</h2><button id="report-close" class="button secondary" type="button">关闭</button></div><p id="report-name"></p><table class="report-table"><caption>当前已读取的测量与分析结果</caption><tbody id="report-rows"></tbody></table><h3>当前窗口波形片段</h3><img id="report-wave" alt="当前窗口的原始波形片段" hidden><p id="report-range"></p><p id="report-note" class="muted"></p><p class="muted">课程研究用途，分类结果不作为临床诊断。本报告不替代完整原始记录。</p><p id="report-feedback" role="status"></p><div class="report-actions"><button id="report-print" class="button primary" type="button" disabled>打印 / 存储 PDF</button><span class="muted">由系统选择保存或打印，不会自动分享。</span></div></dialog>
   <dialog id="record-editor"><form id="record-form"><h2>名称与备注</h2><label for="edit-name">记录名称</label><input id="edit-name" maxlength="100"><label for="edit-note">备注</label><textarea id="edit-note" maxlength="1000" rows="4"></textarea><p id="edit-error" class="form-error" role="alert"></p><div class="dialog-actions"><button type="button" class="button secondary" onclick="this.closest('dialog').close()">取消</button><button type="submit" class="button primary">保存</button></div></form></dialog>
   <dialog id="admin-dialog" class="admin-dialog" aria-labelledby="admin-title">
     <div class="panel-heading"><h2 id="admin-title">账号管理</h2><button type="button" class="button secondary" onclick="this.closest('dialog').close()">关闭</button></div>

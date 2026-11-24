@@ -20,7 +20,7 @@ MEMBERS = (
     'web/icons/icon-192.png', 'web/icons/icon-512.png', 'web/icons/icon-maskable.png', 'web/icons/apple-touch-icon.png',
     'web/index.html', 'web/app.js', 'web/style.css', 'web/workspace.js', 'web/workspace.css',
     'web/connection.js', 'web/desktop_core.js', 'web/desktop.js', 'web/desktop.css',
-    'web/mobile.js', 'web/mobile.css',
+    'web/experience_core.js', 'web/experience.js', 'web/experience.css', 'web/mobile.js', 'web/mobile.css',
     'deploy/prepare_public.py', 'deploy/linux/手机公网访问说明.txt',
     'deploy/linux/install.sh', 'deploy/linux/start.sh',
     'deploy/linux/ecg-cloud.service', 'deploy/linux/部署说明.txt',

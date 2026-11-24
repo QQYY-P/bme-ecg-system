@@ -5,6 +5,7 @@ function clearDevices(){
 function renderDevices(payload){
  const items=payload?.devices || [],selected=state.filters.device_id || '';
  state.devices=items;
+ if(typeof UserExperience!=='undefined')UserExperience.renderDevices(payload);
  const selector=$('filter-device'),pending=selector.value || '';selector.replaceChildren();
  const option=(value,label)=>{const node=document.createElement('option');node.value=value;node.textContent=label;selector.append(node)};
  option('','全部设备');

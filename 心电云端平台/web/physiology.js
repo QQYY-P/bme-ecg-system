@@ -3,7 +3,7 @@
   const value=factory();if(typeof module==='object'&&module.exports)module.exports=value;else root.ECGPhysiology=value;
 })(globalThis,function(){
   'use strict';
-  function create({element,context,request}){
+  function create({element,context,request,onChange=()=>{}}){
     let generation=0,pending=false,current=null;
     const ids=['qrs-count','rr-mean','rr-heart-rate','qrs-quality','rr-sd','rr-rmssd','qrs-effective'];
     const text=(id,value)=>element(id).textContent=value;
@@ -20,13 +20,13 @@
       text('qrs-coverage-note','');text('qrs-reasons','');
     }
     function clear(){
-      generation++;pending=false;current=null;resetMetrics();
+      generation++;pending=false;current=null;resetMetrics();onChange(null);
       text('physiology-status','待分析');text('physiology-message','');text('physiology-version','');
       text('physiology-analyze','开始 QRS/RR 分析');updateAvailability();
     }
     function render(result){
       if(result.session_id!==context().selected)return;
-      current=result;resetMetrics();
+      current=result;resetMetrics();onChange(result);
       const status=result.analysis_status;
       text('physiology-status',({complete:'已完成',ineligible:'条件不足',queued:'排队中',running:'分析中',
         failed:'未完成',not_run:'待分析',not_configured:'未启用'})[status] || '待确认');
@@ -65,7 +65,7 @@
         if(valid())render(result);
       }catch(error){
         if(!valid())return;
-        current=null;resetMetrics();text('physiology-status','暂不可用');text('physiology-version','');
+        current=null;resetMetrics();onChange({session_id:sid,analysis_status:error.status===404?'not_configured':'unavailable'});text('physiology-status','暂不可用');text('physiology-version','');
         text('physiology-message',error.status===404?'当前服务尚未提供 QRS/RR 分析，请等待服务更新。':'QRS/RR 状态读取失败：'+error.message);
         updateAvailability();
       }
