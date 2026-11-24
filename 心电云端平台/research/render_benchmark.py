@@ -138,6 +138,8 @@ def render(qrs, classifier):
                      'F1（50ms）', 'R MAE（ms）', 'RR MAE（ms）', '匹配相邻 RR / 参考 RR'], rows), '',
               '汇总由合并计数计算。R/RR 误差按匹配点/相邻间期对加权；RR 只比较双方均相邻且同连续段的匹配对，'
               '漏检和断段不会被拼接为一次正常 RR。该误差必须与覆盖数一起阅读。', '',
+              '节律、伪迹及室扑波等非心搏标注不作为参考 R 点；对应时段的额外检测仍可能计为 FP。'
+              '符号计数和排除数量见 JSON。本报告使用所述 WFDB Python 评分口径，不宣称等同完整 bxb/AAMI 标准评测。', '',
               '### 逐记录 QRS', '',
               table(['记录', '导联通道', '现有 F1', 'XQRS F1', 'FastNVG F1', '现有质量通过比例'], [
                   [r['record'], r['channel'], *[pct(r['algorithms'][name]['qrs_150ms']['f1']) for name in DETECTORS],
@@ -222,10 +224,16 @@ def main():
     parser.add_argument('--qrs', required=True, type=Path)
     parser.add_argument('--classification', required=True, type=Path)
     parser.add_argument('--output', required=True, type=Path)
+    parser.add_argument('--check', action='store_true', help='verify generated Markdown without changing it')
     args = parser.parse_args()
     validate_report_output(args.output, [args.qrs, args.classification])
     result = render(json.loads(args.qrs.read_text(encoding='utf-8')),
                     json.loads(args.classification.read_text(encoding='utf-8')))
+    if args.check:
+        if not args.output.is_file() or args.output.read_text(encoding='utf-8') != result:
+            raise SystemExit('Benchmark Markdown is missing or stale; regenerate from both completed JSON files')
+        print('Benchmark Markdown matches both completed JSON reports')
+        return
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(result, encoding='utf-8')
 

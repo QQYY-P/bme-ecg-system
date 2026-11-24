@@ -34,6 +34,8 @@ jobs:
       - run: python tools/check_repository.py
       - run: python tools/check_docs.py
       - run: python tools/sync_docs.py --check
+      - name: Verify benchmark report matches its JSON evidence
+        run: python '心电云端平台/research/render_benchmark.py' --qrs 'docs/algorithm-validation/qrs-comparison.json' --classification 'docs/algorithm-validation/classification-benchmark.json' --output 'docs/algorithm-validation/算法对比与分类评测.md' --check
 
   python:
     name: Python (${{ matrix.suite }})
