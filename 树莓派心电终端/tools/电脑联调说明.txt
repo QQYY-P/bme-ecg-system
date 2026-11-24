@@ -1,29 +1,19 @@
-电脑与树莓派局域网连通性测试
-2026-10-26
+电脑与树莓派局域网演示消息测试
 
-当前电脑的有线地址为 192.168.137.1，照片中的树莓派地址为 192.168.137.59。
-接口已经在电脑启动，仅绑定 192.168.137.1:8765；电脑自身的请求已验证通过。
-尚未从树莓派发起请求，因此尚未确认两台设备之间的实际可达性。
-本程序只接受演示消息，不接收心电、患者资料或模型文件。
+从“树莓派心电终端”模块根目录运行：
+  python tools/local_link_server.py --bind <电脑当前局域网地址> --port 8765
+未指定 --bind 时只监听 127.0.0.1，另一台设备无法直接访问。
 
-保留现有网线连接，在树莓派执行：
-  curl --connect-timeout 5 --max-time 10 http://192.168.137.1:8765/health
-应收到含 ok: true、service: ecg-local-link 的 JSON。
+在树莓派核对双方当前 IP 后执行：
+  curl --connect-timeout 5 --max-time 10 http://<电脑当前局域网地址>:8765/health
+演示消息示例：
+  curl --connect-timeout 5 --max-time 10 -H 'Content-Type: application/json' -d '{"device_id":"pi2","message":"hello from pi2"}' http://<电脑当前局域网地址>:8765/api/demo
 
-连通后可发一条测试消息：
-  curl --connect-timeout 5 --max-time 10 -H 'Content-Type: application/json' -d '{"device_id":"pi2","message":"hello from pi2"}' http://192.168.137.1:8765/api/demo
-电脑收到的最新演示消息位于 validation/local_link/latest_demo.json。
-health 成功只说明连接和接口可用；POST 成功并生成记录才能说明演示消息已保存。
+最新演示消息默认写入 validation/local_link/latest_demo.json，可用 --output 指定目录。
+这些运行状态只保留在本机；历史进程号不能用于判断当前实例。
+端口占用时先核对当前进程的程序路径和命令行，不停止未确认的进程。
+连接超时时核对网络、绑定地址和入站规则；不要关闭整个防火墙。
 
-如果连接超时，核对网线、双方当前 IP 和 Windows 入站规则；不要关闭整个防火墙。
-改为 Wi-Fi 后，需重新核对双方网络地址，并将服务器绑定到电脑在该网络中的地址。
-目前电脑 Wi-Fi 地址为 10.193.77.203，但测试接口没有绑定到它；网络地址之后可能变化。
-校园/访客无线网可能限制设备互访，连接同一个热点并不必然保证互通。
-
-重新启动：在项目根目录运行 python tools/local_link_server.py --bind 192.168.137.1 --port 8765
-如果端口被占用，先核对已运行实例，不要重复启动。
-本次后台进程信息：validation/local_link/server_process.json；进程号仅用于识别当前实例，重启后可能失效。
-本次进程号为 21916，程序路径和命令行需与 local_link_server.py 核对后再停止。
-网络日志位于 validation/local_link/server.stdout.log 和 server.stderr.log。
-
-真正上云时增加 HTTPS、设备认证、数据库和持久化补传；此测试接口不是生产云服务。
+接口仅接受演示消息，不接收心电、身份资料或模型文件，也不是正式云服务。
+2026-10-26 原始记录保存在 docs/archive/电脑联调记录_20261026.txt。
+工具分类与运行影响见 tools/README.md；正式平台使用 HTTPS 与设备授权。
