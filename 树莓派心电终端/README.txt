@@ -1,249 +1,127 @@
-树莓派心电波形终端：本地屏幕版 + CardioEdgeAI 三分类研究模块
-更新日期：2026-11-23
+由 tools/sync_docs.py 从本模块 docs/ 下的快速开始、使用说明、故障排查生成。
+请修改 Markdown 原文后重新生成，不单独编辑本文件。
+本文说明完整仓库当前代码；早期精简发布包不一定包含全部功能。
 
-2026-11-23 应用高优先级功能（本地验证，尚未部署本次更新）
-开始前确认使用者、采集端口、存储和云端授权；可选手动、3 分钟、5 分钟。
-到时停止并保存，显示本次测量总结；历史记录可再次打开总结、导出中文 PDF、手动上传和手机查看。
-质量通过时间逐点累计，心率只统计有效实采 RR 间期；模拟、无有效信号或保存异常不生成可靠心率结论。
-新增 PDF 依赖：Raspberry Pi OS 安装 python3-reportlab fonts-wqy-microhei。
-使用方式见 docs/设备待机与日常使用.md；统一进度见../心电云端平台/docs/云端工作台迭代.md。
-最新部署准备包为 dist/ecg-cloud-workspace.tar.gz，需与对应云端版本一起升级。
+# 树莓派快速开始
 
-2026-11-23 设备待机与日常使用（本地完成，待板上验收）
-新入口：sh "/home/pi2/树莓派心电终端/start-device.sh"
-全屏待机，人工点击“开始采集”才建记录；待机每两秒后台检查串口，多 USB 须人工选择。
-主操作为开始采集、停止并保存、查看本次记录；更多中提供来源选择、设备状态、退出和安全关机。
-安全关机等待保存和后台任务；保存异常不自动关机。笔记本预览不会关闭电脑。
-可撤销开机配置、使用流程、验证边界和回退方式统一见 docs/设备待机与日常使用.md。
-旧的 --port auto / --demo 启动语义保留；新增 --standby 才明确要求等待手动开始。
+终端导航（https://github.com/XiongBoT/bme-ecg-system/blob/main/树莓派心电终端/README.md） · 使用说明（https://github.com/XiongBoT/bme-ecg-system/blob/main/树莓派心电终端/docs/使用说明.md） · 故障排查（https://github.com/XiongBoT/bme-ecg-system/blob/main/树莓派心电终端/docs/故障排查.md）
 
-2026-10-29 数据管理更新
-历史记录支持完整 ZIP / 原始 CSV 导出、单条移入回收站、恢复和二次确认永久删除。
-设置增加显示、采集、存储、时间四页，配置在本机持久保存。
-空间低于 512 MiB 提醒、低于 128 MiB 停止并保存；阈值可调，不自动删除历史数据。
-会话新增时间来源和可信状态；旧日期不改写。详见 docs/数据管理与设置说明.txt。
+本文说明仓库当前代码的安装与启动。板上是否已安装相同版本，另查设备阶段记录（https://github.com/XiongBoT/bme-ecg-system/blob/main/树莓派心电终端/docs/设备待机与日常使用.md）；本轮文档整理不部署设备。
 
-2026-10-28 更新
-默认接入独立后台进程中的 N/S/V 三分类，仅接收已识别 MODE=0 的有效实采/回放信号。
-采用 360Hz、ADC 电压转换、50Hz 陷波、0.5–40Hz 带通、滚动标准化和自动 R 点/RR 特征。
-模型需要后一个心搏与右侧上下文，首次约 10 秒后开始输出；断流/无效/饱和/模式切换清空结果。
-界面显示分类与模型分数；N 含束支阻滞，不等于完全正常，S 分类能力较弱且标为待复核。
-启动 sh ~/ecg-screen.sh --port auto；加 --no-classification 可仅运行原采集波形功能。
-新发布包由 tools/build_cardioedge_release.py 构建；旧 no-model 发布包和历史模型文件保留。
-详细约定及验证边界见 docs/三分类实时接入说明.txt，证据位于 evidence/18_cardioedge_integration_20261028/。
+## 安装依赖
 
-当前用途与验证边界
+Raspberry Pi 2 使用 Raspberry Pi OS 的 ARM32 软件包。在树莓派执行：
 
-硬件链路：心电模块 AD8232 → STM32 → USB-TTL → 树莓派 2 → 本地显示器。
-现有 app.py、controller.py 和 ui/ 实现波形、心率/RR、状态、完整记录、历史导出和 N/S/V 研究分类。
-cardioedge/ 使用已验证的专用 NumPy 适配器，不需要安装 PyTorch 或通用 TFLite 运行时。
-models/、numpy_predictor.py、ecg_classifier.py、inference_worker.py 和旧模型测试保留为历史原型，
-不会被当前应用入口加载；实际新模型文件单独位于 cardioedge/，不与旧 N/PVC/PAC 原型混用。
+```sh
+sudo apt update
+sudo apt install python3-numpy python3-scipy python3-serial python3-tk python3-reportlab fonts-wqy-microhei
+python3 -c "import numpy, scipy, serial, tkinter, reportlab; print('dependencies OK')"
+```
 
-已具备的代码功能：
-- STM32 七字节（AA55/模式/序号/ADC/SUM8）协议接收、合成模拟和完整 CSV 回放三种来源。
-- 本地 Tkinter 波形界面；2/5/10 秒窗口，原始/处理后/双波形，暂停显示及全屏切换。
-- 监护仪风格界面：黑底绿色心电波形，右侧大号心率/RR 与保存点数，底部采集操作。
-- 识别实采后启用0.5Hz高通、50Hz陷波、40Hz低通；保留原始波形与电压对照。
-- 原有窗式 R 峰检测和心率/RR，非 Pan-Tompkins，非诊断结果。
-- 无效点、段边界和接收中断处理；原始数据持续记录，不受暂停显示影响。
-- “检查切换”观察实体SW2操作，按接收到的MODE确认切换，并显示超时或中断原因。
-- 分开展示连接状态和信号状态；无效、饱和、平直、强干扰时暂停心率/RR显示。
-- 整个会话的原始块、SQLite 索引、事件与质量摘要；停止后查询历史和导出完整 CSV。
+Lite 系统若没有图形环境，还需安装 `xserver-xorg xserver-xorg-legacy xinit openbox x11-xserver-utils`。应用由普通用户运行，依赖导入成功不代表图形会话已可用。
 
-真实 USB 串口已接收七字节帧；未连接电极时曾观测到实采MODE=0且ADC=0xFFFF。
-状态优化版本另收到2195点MODE=1板端模拟，原始字节与CSV一致，质量可用、心率约72次/分。
-本次未观察实体SW2从一个MODE切到另一个MODE的过程；三分钟人体实采及长期稳定性仍需板测。
-无模型界面版已上传树莓派，图形依赖已安装；各版验证结果见下文及evidence目录。
-HDMI 黑屏已定位为图形服务写入全零颜色矩阵，恢复正常颜色映射后控制台立即恢复。
-修复后的测试窗口及正式心电界面均由用户确认在物理 HDMI 屏幕正常显示，模拟波形持续变化。
-合成模拟用于验证软件链路，数据不是人体心电，不是硬件采样结果。
-设备是 1 GB Raspberry Pi 2；与课程 >=4 GB 的硬件建议有偏离，报告应如实说明。
-当前不能据电脑测试或模拟数据宣称课程整机验收完成。
+采用 apt 路线无需再对系统 Python 执行 pip。需要隔离环境时，先安装 `python3-venv`，再用 `python3 -m venv --system-site-packages .venv`，通过 `ECG_PYTHON` 指定环境中的解释器。不要复制 Windows 虚拟环境。
 
-一、树莓派依赖准备
+## 在本地屏幕启动
 
-以下安装命令需要网络和 sudo，仅用于安装系统软件；应用本身使用普通用户 pi2 运行。
-优先采用 Raspberry Pi OS 提供的 ARM32 软件包，避免在 Pi 2 上编译大型数值库：
+以下路径是现有部署示例，换机器后替换为实际目录。在树莓派所接屏幕的本地终端执行：
 
-  sudo apt update
-  sudo apt install python3-numpy python3-scipy python3-serial python3-tk fonts-wqy-microhei
+```sh
+sh "/home/pi2/树莓派心电终端/start-device.sh"
+```
 
-若使用 Raspberry Pi OS Lite，且没有图形桌面，还需要：
+进入待机后点击“开始采集”，确认使用者、串口、存储和云端状态。自动识别串口不会自动开始记录。多个 USB 串口必须人工选择。
 
-  sudo apt install xserver-xorg xserver-xorg-legacy xinit openbox x11-xserver-utils
+未接硬件时，可运行明确标记的合成演示：
 
-启动脚本不修改开机目标、自动登录、用户 .xinitrc 或系统显示配置。
-安装包名称依据 Raspberry Pi OS/Debian 系的软件仓库；最终可用版本以板上的 apt 和实际导入结果为准。
-Tkinter 需要图形会话；仅安装 python3-tk 不能让纯文本控制台直接显示窗口。
+```sh
+sh "/home/pi2/树莓派心电终端/start-demo.sh" --duration 180 --fullscreen
+```
 
-依赖导入检查（SSH 中也可以执行）：
-  python3 -c "import numpy, scipy, serial, tkinter; print(numpy.__version__, scipy.__version__, serial.__version__, tkinter.TkVersion)"
+没有本地图形会话的 SSH 连接用于编辑、查看日志及无界面检查。短时模拟示例：
 
-requirements-pi.txt 是备用虚拟环境的依赖范围，不是板端验证过的版本锁。
-采用上述 apt 路线时，无需再对系统 Python 执行 pip install。
-若另建虚拟环境，可用 python3 -m venv --system-site-packages .venv 继承系统数值库；
-需先安装 python3-venv。通过 ECG_PYTHON 指定该环境的 Python 可执行文件。
-不要 sudo pip，也不要用 --break-system-packages 改写系统环境。
+```sh
+python3 app.py --headless --demo --duration 10 --summary evidence/demo-10s-summary.json
+```
 
-二、在树莓派物理屏幕启动
+这条相对路径命令从终端模块根目录执行。模拟输出保留在本机，不作为实物采集证据。
 
-程序部署目录：/home/pi2/树莓派心电终端。
-下面一条命令必须在树莓派所接屏幕和键盘上的本地终端中输入：
+## 接入串口
 
-  sh "/home/pi2/树莓派心电终端/start-demo.sh" --fullscreen --geometry 800x480
+从终端模块根目录运行 `python3 app.py --list-ports`，优先选择 `/dev/serial/by-id/` 稳定路径。当前固件使用七字节帧、115200、8N1、360 Hz；接线和格式见 STM32 串口对接（https://github.com/XiongBoT/bme-ecg-system/blob/main/树莓派心电终端/docs/STM32串口对接说明.txt）。
 
-这会启动合成模拟波形，界面会持续标记“合成模拟”。
-已有本地图形会话时直接打开窗口；物理 /dev/ttyN 文本控制台会通过 startx 打开临时 X11 会话，
-并在有 openbox 时启用轻量窗口管理器。关闭程序后该临时会话结束，返回文本控制台。
-只有脚本新建的临时 X 会话会通过 xset 唤醒屏幕、关闭屏保和 DPMS；退出该会话后自然结束。
-已有图形桌面不修改这些设置；启动脚本不改变系统的永久显示配置。
-F11 切换全屏，Esc 退出全屏；停止按钮结束本次采集并完成保存。
-Alt+F4 关闭整个窗口；在纯文本控制台启动时，关闭窗口会结束临时图形会话并返回命令行。
-“暂停显示”仅冻结画面，采集和原始记录继续；恢复后显示最新波形。
-左侧显示单通道心电波形；右侧突出心率、RR 间期及已保存点数；顶部显示录制时长。
-波形右上角切换原始/处理后/双波形以及时间窗口；不显示当前硬件没有测量的血氧或血压参数。
-底部选择来源后点击“开始采集”“开始演示”或“开始回放”；“历史记录”中可导出完整 CSV。
-自动纵轴已移入“设置”；采集中可调整显示选项，参考电压在停止后才能修改。
-800×480 小屏采用紧凑布局，全屏采用更宽松的间距。右下角显示待保存数量或保存状态。
+若账号没有串口权限，按实际用户名加入 `dialout` 组后重新登录。`--port auto` 仅在存在唯一 USB 串口时选择它。
 
-本机 HDMI 黑屏修复（2026-10-27）：
-32 位图形服务把 CTM（颜色转换矩阵）的九个值写成全零，导致物理屏幕全黑，但软件截图正常。
-关闭图形加速、唤醒屏幕和切换文字控制台均未解决；恢复 CTM 后无需重启即可恢复画面。
-start-screen.sh 在自己创建的 X 会话内检查已启用输出，仅将九项全零 CTM 改为单位矩阵；
-正常或自定义非零矩阵不改，已有桌面会话不改，读取/修复失败则报错停止。
-该修复使用已在本板验证的 xrandr 1.5.3 九个实数参数格式：1,0,0,0,1,0,0,0,1。
-测试窗口及完整心电界面已验证该修复有效；默认分辨率保持显示器提供的 1920×1080。
-本板已配置的快捷启动命令为 sh ~/ecg-screen.sh --demo，需在树莓派本地控制台输入。
+## 升级与开发
 
-若其它显示器需要指定兼容模式，可在树莓派物理文本控制台临时选择：
-  ECG_SCREEN_MODE=1024x768 ECG_SCREEN_RATE=60 sh "/home/pi2/树莓派心电终端/start-demo.sh" --fullscreen
+当前完整工作台包由 `python tools/package_cloud_workspace.py` 构建，输出 `dist/ecg-cloud-workspace.tar.gz`。构建不安装、不部署；历史 `build_cardioedge_release.py` 和固定哈希安装工具不用于当前完整工作台升级。
 
-默认不强制分辨率或刷新率。指定 ECG_SCREEN_MODE 后，脚本使用 xrandr 切换第一个 connected 输出；
-ECG_SCREEN_RATE 可选，只在同时指定模式时使用。查询或切换失败会明确提示并停止启动。
-这些设置只用于脚本新建的 X 会话；已有图形桌面内启动不会改变显示模式。
+板上文件比对、备份、开机配置与回退方法见设备说明（https://github.com/XiongBoT/bme-ecg-system/blob/main/树莓派心电终端/docs/设备待机与日常使用.md#启动与部署准备）。电脑开发和分模块测试见贡献指南（https://github.com/XiongBoT/bme-ecg-system/blob/main/CONTRIBUTING.md#检查与实物联调）。
 
-只打开界面并手工选择数据源：
-  sh "/home/pi2/树莓派心电终端/start-screen.sh" --geometry 1000x620
+# 树莓派使用说明
 
-运行 3 分钟模拟后自动停止采集（窗口保留，可以查看历史记录）：
-  sh "/home/pi2/树莓派心电终端/start-demo.sh" --duration 180 --fullscreen
+快速开始（https://github.com/XiongBoT/bme-ecg-system/blob/main/树莓派心电终端/docs/快速开始.md） · 故障排查（https://github.com/XiongBoT/bme-ecg-system/blob/main/树莓派心电终端/docs/故障排查.md） · 文档分类（https://github.com/XiongBoT/bme-ecg-system/blob/main/树莓派心电终端/docs/README.md）
 
-这些命令通过 sh 运行，支持中文/空格路径，不依赖从 Windows 复制文件时是否保留执行位。
-启动脚本默认将 BLAS/OMP 线程数限制为 1；若需比较 2 线程，使用：
-  ECG_BLAS_THREADS=2 sh "/home/pi2/树莓派心电终端/start-demo.sh"
+## 完成一次测量
 
-三、SSH 与 VS Code 的使用位置
+1. 在待机界面接入 USB 串口；多个设备时明确选择采集端口。
+2. 点击“开始采集”，核对使用者、端口、可用空间和云端状态，选择手动结束、3 分钟或 5 分钟。取消准备窗口不会建立记录。
+3. 观察接收点数、信号质量与保存状态。“暂停显示”只冻结画面，采集和保存继续。
+4. 点击“停止并保存”，或等待所选时长结束；等到保存完成后查看测量总结。
+5. 在历史记录中复核、导出 CSV/ZIP 或中文 PDF；确认云端授权后可以手动上传并查看分析。
 
-笔记本上的 Remote-SSH 用于编辑代码、查看文件和执行无界面验证。
-SSH 会话中直接运行图形启动脚本会提示转到树莓派物理终端；即便启用了 X11 转发，也不把笔记本窗口
-当作树莓派本地屏幕验收。不要设置 DISPLAY=:0 或 sudo 运行应用来绕过图形会话权限。
+设备待机、总结和安全关机的详细行为及待验收项见设备待机与日常使用（https://github.com/XiongBoT/bme-ecg-system/blob/main/树莓派心电终端/docs/设备待机与日常使用.md#日常使用）。源码具备相应功能不代表板端已经升级。
 
-SSH 中可运行同一采集/保存链路的短时无界面模拟：
-  python3 "/home/pi2/树莓派心电终端/app.py" --headless --demo --duration 10 --summary "/home/pi2/树莓派心电终端/evidence/demo-10s-summary.json"
+## 来源、波形与分类
 
-完整 3 分钟模拟验证：
-  python3 "/home/pi2/树莓派心电终端/app.py" --headless --demo --duration 180 --summary "/home/pi2/树莓派心电终端/evidence/demo-180s-summary.json"
+“更多 → 数据来源”可选择合成模拟或文件回放；来源标签必须保留。串口的 MODE=0 表示实采来源，MODE=1 表示板端模拟。协议有效不等于信号有效。
 
-360 Hz、180 秒的理论输入为 64800 点；最终以 received、saved、会话完成状态和错误字段为准。
-这仍是模拟验证，不能命名为真实 STM32 采集证据。
+当前主分类模型位于 cardioedge/（https://github.com/XiongBoT/bme-ecg-system/blob/main/树莓派心电终端/cardioedge/README.md），输出 N/S/V；旧 models/（https://github.com/XiongBoT/bme-ecg-system/blob/main/树莓派心电终端/models/README.md） 是历史原型。分类需要有效信号及前后心搏上下文，初次输出有延迟。模型分数不是诊断概率，N 类也不等于完全正常，S 类需结合波形复核。
 
-四、连接当前 STM32 项目的串口
+显示电压按 ADC 与参考电压换算，不直接代表皮肤心电幅度。处理后波形用于显示对照，原始 ADC 和接收字节继续保存。具体规则见实采预处理（https://github.com/XiongBoT/bme-ecg-system/blob/main/树莓派心电终端/docs/实采预处理说明.txt）、状态与信号质量（https://github.com/XiongBoT/bme-ecg-system/blob/main/树莓派心电终端/docs/状态与信号质量说明.txt）、分类呈现（https://github.com/XiongBoT/bme-ecg-system/blob/main/树莓派心电终端/docs/分类呈现与复核说明.txt）。
 
-待 USB-TTL 与树莓派连接并确认接线后：
-1. 用 python3 app.py --list-ports 查看设备，优先选择 /dev/serial/by-id/ 下稳定路径。
-2. 若当前账号不在 dialout 组，可执行 sudo usermod -aG dialout pi2，再注销并重新登录。
-3. 在本地屏幕启动 start-screen.sh，选择“STM32 串口”、对应 USB 串口，点击“开始采集”。
-4. 程序搜索AA55并验证MODE、ADC和SUM8，从任意序号开始接收；界面自动显示实采/板端模拟。
-5. 检查接收点数、已保存点数、信号状态与实际波形；停止后等待保存完成，再导出完整记录。
+## 记录、导出与云端
 
-也可从本地终端指定串口直接启动：
-  sh ~/ecg-screen.sh --port auto
-  或明确指定设备：
-  sh "/home/pi2/树莓派心电终端/start-screen.sh" --port "/dev/ttyUSB0" --fullscreen
+默认记录位于模块内 `data/sessions/<session_id>/`；可用 `--data-dir` 指定其他可写目录。会话包括原始块、SQLite 索引、事件与质量摘要，历史导出读取完整已提交数据。
 
-auto 只选择唯一 USB 串口；没有或存在多个 USB 串口时明确提示，不会自动选择板载 ttyAMA0。
-ttyUSB0 只是示例，须替换为实际枚举的设备。应用固定使用 115200、8N1、360 Hz。
-当前 STM32 工程由 USART1 PA9 输出：PA9 → USB-TTL RX，GND 共地，USB 插头接树莓派。
-上电即开始发送；每点AA 55 MODE SEQ DATA_H DATA_L SUM，每约100ms发送36点/252字节。
-PC13/SW2切换实采与板端模拟，逐点MODE=0/1；界面与记录均跟随MODE，不依据波形外观猜测。
-可先点击“检查切换”，再操作SW2；约10秒内收到新MODE才显示切换确认。
-这是观察操作结果，当前STM32串口仅发送，树莓派不会向STM32发送切换命令。
-“串口正常”仅表示收到协议有效帧，可能同时显示“无效数据”；不等于已获得可用心电。
-MODE首次确认、断流后重新确认不作为按键切换成功。细节见docs/状态与信号质量说明.txt。
-此版本要求七字节固件；旧三字节固件不会自动兼容。
-接收中显示原始字节数和已解码点数；约 3 秒无数据/未对齐时给出接线或固件格式提示。
-已对齐后断流超过 2 秒会清除旧残帧、重新等待对齐并重置分析上下文；拔线故障会结束并保存已接收数据。
-图形模式下 --duration 当前只控制合成模拟，真实采集请在界面手工停止。
-无界面真实串口可通过 --headless --port <实际设备> --duration 180 定时停止。
+测量总结中的有效采样比例、质量通过时间和有效 RR 心率各有不同含义；缺失统计显示未知。PDF 使用本地保存的结果，不能据此判断云端分析完成。数据管理详见记录与设置（https://github.com/XiongBoT/bme-ecg-system/blob/main/树莓派心电终端/docs/数据管理与设置说明.txt）。
 
-协议有AA55帧头和SUM8累加校验；校验失败会丢弃坏帧并重新搜索，保留原始接收字节。
-0xFFFF表示无效数据，可能为导联无效或切换隔离；MODE是独立来源字段。
-新采样块v2保存逐点模式，CSV追加mode/signal_origin，质量报告v3；SQLite索引结构仍兼容。
-旧v1记录仍可读取、导出及恢复，旧CSV未知模式不会被补写成实采。
-序号异常只报告“观察到的异常”，不能据此宣称零丢包。
-人体连接的供电和隔离按课程硬件方案检查，USB-TTL 本身不是隔离器。
-完整接线、按键说明及源码追踪见 docs/STM32串口对接说明.txt。
+云端支持当前 HTTPS 平台和账号/设备授权。手机使用记录所属账号登录；未分配记录由管理员处理归属。具体接入见账号与记录归属（https://github.com/XiongBoT/bme-ecg-system/blob/main/树莓派心电终端/docs/云端账号与记录归属.txt），跨模块约定见共同接口（https://github.com/XiongBoT/bme-ecg-system/blob/main/docs/接口约定.md）。
 
-五、数据、回放与显示含义
+## 退出与关机
 
-默认保存位置：程序目录/data/sessions/<session_id>/。
-每次开始创建新会话，可用 --data-dir 指定其它可写目录。
-主要文件：session.json、index.sqlite、chunks/、wire/、quality.json、exports/。
-界面“历史 / 导出”读取完整已提交会话，不只是最近 30 秒显示缓存。
-停止后可导出完整 CSV；来源、会话、原始序号、采样位置及质量标记保留在记录中。
-实采预处理的默认参数、范围和原始数据保留规则见 docs/实采预处理说明.txt。
-CSV 回放使用本程序导出的格式，并明确标记“文件回放”：
-  sh "/home/pi2/树莓派心电终端/start-screen.sh" --replay "/home/pi2/某次完整记录.csv"
+先停止并等待保存完成。界面“安全关机”会确认并等待后台任务；保存失败或权限不足时不自动关机。笔记本预览不会执行树莓派关机。
 
-纵轴为 ADC 输入电压 V，使用 ADC×Vref/4095；默认 Vref=3.300 V 且未校准。
-该数值不是直接测得的皮肤心电幅度 mV。处理后波形只用于显示对照，原始 ADC 数据不改写。
-心率/RR 来自当前窗式检测方法；无效、超时或持续无可信峰时显示“--”，不能作为诊断结论。
-信号质量检查还覆盖持续平直、近轨削顶与明显高频/工频干扰；通过检查后才允许积累心率。
-质量检查使用原始ADC，处理后曲线不用于掩盖原始信号问题；所有原始点与原始字节仍保存。
+开机待机配置由独立工具管理，安装、撤销与实物验收步骤见设备说明（https://github.com/XiongBoT/bme-ecg-system/blob/main/树莓派心电终端/docs/设备待机与日常使用.md#查看与撤销开机配置）。
 
-六、历史验证记录与尚未完成事项（以下主要是 2026-10-27 及以前的无模型版本）
+# 树莓派故障排查
 
-2026-10-26 笔记本完整开发目录验证：73 项测试通过（其中包含保留的历史原型测试）。
-当时纯无模型发布包包含 10 个测试文件，不依赖旧模型或权重文件。
-2026-10-27 串口对接已通过 Pi 上真实 pyserial 接口的三组 Linux 伪终端测试：
-中途接入与碎片帧、断流残帧丢弃后重同步、模拟拔线；接收/保存/CSV 内容、来源元数据均一致。
-这些是软件串口证据，不验证实体电平、接线、波特率时序或已烧录固件。
-旧协议随后通过实体板模拟联调：3484点逐点匹配STM32模拟表，心率约72次/分，用户确认HDMI动态波形。
-这是旧三字节版本的历史结果，不能替代七字节新固件或人体实采验证；记录见 evidence/15_stm32_live_20261027/。
-软件串口验证工具：tools/verify_stm32_serial.py；验证记录见 evidence/14_serial_stm32_20261027/。
-频繁段边界回放已按最多 36 点组成采集批次，并保留块内段标记，避免逐段小块挤满接收队列。
-实际无模型界面连续模拟 202.7 秒，接收与保存均为 72972 点，未保存点数为 0。
-已操作验证暂停显示、恢复显示、停止保存和历史列表；模拟心率约 72 bpm、RR 约 833 ms。
-窗口文字布局已在 800×480 和 1000×620 检查。记录证据位于 evidence/06_integration/。
-以上 202.7 秒结果是笔记本证据。
-Pi 2 无模型测试 55 项通过，耗时 40.254 秒；记录见 evidence/10_display_20261027/tests-final.log。
-Pi 2 虚拟显示下另完成 180 秒模拟：接收、保存与导出 CSV 均为 64800 点，待保存为 0。
-该板测最大界面回调间隔约 467 ms，因此不能宣称全程稳定 10 帧/秒；虚拟显示不替代物理 HDMI 验证。
-物理 HDMI 已完成黑屏复现、全零 CTM 取证、恢复控制台及修复后彩色窗口验证。
-用户进一步确认正式全屏界面和动态模拟波形可见；运行截图分辨率为 1920×1080。
-本次物理屏幕模拟保存 44172 点，会话状态 complete；用户停止并关闭窗口后正常返回命令行。
-启动脚本的 13 项隔离仿真通过，覆盖只修复全零矩阵、保留其它映射和错误时停止。
-显示证据见 evidence/10_display_20261027/，脚本验证见 evidence/11_ctm_launcher_20261027/。
+快速开始（https://github.com/XiongBoT/bme-ecg-system/blob/main/树莓派心电终端/docs/快速开始.md） · 使用说明（https://github.com/XiongBoT/bme-ecg-system/blob/main/树莓派心电终端/docs/使用说明.md） · 诊断工具分类（https://github.com/XiongBoT/bme-ecg-system/blob/main/树莓派心电终端/tools/README.md）
 
-本地开发验证命令：
-  python -m unittest discover -s tests -v
+| 现象 | 检查顺序 |
+| --- | --- |
+| SSH 启动后没有本地窗口 | 图形启动脚本应在树莓派物理控制台或本地图形会话运行；SSH 使用无界面模式检查链路，不用 `sudo` 或强设 `DISPLAY=:0` 绕过会话权限 |
+| 模块导入失败 | 按快速开始检查 NumPy、SciPy、pyserial、Tk 和 ReportLab；确认实际解释器，检查 `ECG_PYTHON` 是否指向预期环境 |
+| 串口不存在或被拒绝访问 | 运行 `python3 app.py --list-ports`；核对 USB-TTL、稳定设备路径、`dialout` 权限及是否已有进程占用 |
+| 多个 USB 串口无法自动开始 | 在界面明确选择端口；`auto` 不会猜测正确设备 |
+| 收到字节但没有有效点 | 核对七字节固件、115200/8N1、共地与 RX 接线；检查帧头、MODE 和 SUM8；旧三字节协议不兼容 |
+| 显示无效、平直、饱和或没有分类 | 先查原始信号、导联和来源；无效 ADC、板端模拟、上下文不足或质量不通过均可能暂停分析 |
+| PDF 提示缺少中文字体 | 安装 `python3-reportlab fonts-wqy-microhei`，或将 `ECG_REPORT_FONT` 指向有效中文字体文件 |
+| 空间不足或保存失败 | 查看存储状态，停止后检查数据目录权限；导出并确认备份后再人工管理记录，不删除原始目录来消除提示 |
+| 上传后手机看不到记录 | 确认上传完成、设备授权、记录归属及登录账号；源记录保存成功不代表云端已收到或分析完成 |
 
-可选的图形运行验证工具（需已建立本地图形会话）：
-  python3 "/home/pi2/树莓派心电终端/tools/verify_waveform_runtime.py" --duration 180 --geometry 800x480 --data-dir "/home/pi2/树莓派心电终端/evidence/runtime-data" --output "/home/pi2/树莓派心电终端/evidence/runtime-check.json"
+## HDMI 黑屏
 
-该工具使用合成模拟，并记录运行状态及保存结果，不是人体数据。若使用 xvfb-run，需要另装 xvfb；
-虚拟显示验证不能证明物理 HDMI 输出正常。纯无模型发布包包含该工具，但应用启动不会自动运行它。
+现有 `start-screen.sh` 只在自己创建的 X 会话内检查已启用输出的全零 CTM，按原实现修复；正常矩阵与已有桌面不修改。屏幕截图正常不能替代物理 HDMI 检查。
 
-历史模型测试也保留在 tests/ 中；它们不能替代新版 cardioedge/ 的验证。
-状态优化版本在笔记本与Pi各通过136项测试，Pi上完整状态界面流程和4组伪终端异常测试通过。
-本地屏幕已完成前述模拟显示验证；本次界面验证使用虚拟显示，未重复物理HDMI验收。
-实体按键切换过程、三分钟实采及长期运行仍须实际板测。记录见evidence/17_status_quality_20261027/。
-三分类研究模块已在 2026-10-28 接入；HRV/LF-HF、云端、移动 App 和临床性能验证仍未完成。
-旧模型来源、三模型权重和许可仍在 models/manifest.json 与 models/LICENSE.txt。
-课程阶段要求及当时的后续规划见《docs/archive/课程报告要求与实现步骤.txt》与《docs/archive/第二阶段实施方案_Pi2_现有三分类.txt》。
+需要临时指定兼容模式时，在物理文字控制台执行：
 
-系统安装参考：
-https://packages.debian.org/stable/python/python3-tk
-https://packages.debian.org/en/stable/x11/xinit
-https://manpages.debian.org/trixie/xinit/startx.1.en.html
+```sh
+ECG_SCREEN_MODE=1024x768 ECG_SCREEN_RATE=60 sh "/home/pi2/树莓派心电终端/start-demo.sh" --fullscreen
+```
+
+默认不强制分辨率或刷新率；模式不支持时脚本会报错停止。历史定位过程保留在 README 原文快照（https://github.com/XiongBoT/bme-ecg-system/blob/main/树莓派心电终端/docs/archive/README_20261123.txt），不能据历史结果确认新设备已验证。
+
+## 收集问题信息
+
+记录运行版本、操作步骤、错误消息、数据来源和是否使用实体硬件。工具的前置条件与副作用见工具索引（https://github.com/XiongBoT/bme-ecg-system/blob/main/树莓派心电终端/tools/README.md）。真实心电、数据库、设备凭据及私钥不提交 Git，也不附在公开 Issue 中。
