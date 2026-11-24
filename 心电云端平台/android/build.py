@@ -20,6 +20,7 @@ ASSETS=('index.html','app.js','workspace.js','devices.js','measurement.js','mobi
         'connection.js','desktop_core.js','desktop.js','desktop.css',
         'style.css','workspace.css','measurement.css','mobile.css','pwa.css',
         'device-manager.html','device-manager.js','device-manager.css',
+        'database-manager.html','database-manager.js','database-manager.css',
         'icons/icon-192.png','icons/icon-512.png','icons/icon-maskable.png','icons/apple-touch-icon.png')
 
 def prepare_assets(destination: Path):
