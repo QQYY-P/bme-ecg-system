@@ -70,4 +70,6 @@ git push -u origin feat/history-filter
 
 本地历史报告不自动进入仓库；要新增可共享文档时放到 `docs/`。新增顶层模块需要同步调整根目录 `.gitignore` 的纳入规则。
 
-文件归位：共同说明放根 `docs/`；模块操作与设计放各模块 `docs/`，历史方案与旧图放 `docs/archive/` 并标注适用阶段。可复用脚本放原有 `tools/` 或 `deploy/`；软件测试放模块 `tests/`。模块 `README.md` 提供导航，完整运行步骤继续在已有使用说明中维护。新增重要入口时更新 [文档导航](docs/README.md)，移动文件时一并修正链接和打包引用。Keil、Python 导入及启动脚本要求的目录保持原样。
+文件归位：共同说明放根 `docs/`；模块操作与设计放各模块 `docs/`，历史方案与旧图放 `docs/archive/` 并标注适用阶段。可复用脚本放原有 `tools/` 或 `deploy/`；软件测试放模块 `tests/`。模块 `README.md` 提供导航，现行步骤在模块 `docs/快速开始.md`、`使用说明.md`、`故障排查.md` 维护；修改后执行 `python tools/sync_docs.py --write` 更新离线 `README.txt`，不手工维护两份内容。新增重要入口时更新 [文档导航](docs/README.md)，移动文件时一并修正链接和打包引用。Keil、Python 导入及启动脚本要求的目录保持原样。
+
+文档和文件归位修改提交前，执行 `python tools/check_docs.py`、`python tools/sync_docs.py --check` 及 `python -m unittest discover -s tools -p "test_*.py" -v`。新增文件先纳入暂存区：检查器以 Git 跟踪路径为准，不让本机未跟踪文件掩盖断链。当前四份服务器/终端发布白名单纳入静态路径检查；Windows/Android 打包另有原 CI 检查。
