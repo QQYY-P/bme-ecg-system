@@ -38,10 +38,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.net.ssl.HttpsURLConnection;
+import org.json.JSONTokener;
 
 public final class MainActivity extends Activity {
     private WebView web;
     private LinearLayout root;
+    private ReportPrinter reportPrinter;
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private String exportSession, exportUser, exportCookie;
     private static final int SAVE_CSV = 14;
@@ -50,6 +52,7 @@ public final class MainActivity extends Activity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
+        reportPrinter=new ReportPrinter(this);
         if(cacheCleaned.compareAndSet(false,true)) {
             File[] abandoned=getCacheDir().listFiles((dir,name)->name.startsWith("ecg-export-")&&name.endsWith(".csv"));
             if(abandoned!=null)for(File file:abandoned)file.delete();
@@ -72,7 +75,7 @@ public final class MainActivity extends Activity {
         toolbar.addView(name, new LinearLayout.LayoutParams(0, dp(48), 1));
         name.setGravity(Gravity.CENTER_VERTICAL);
         Button help = new Button(this); help.setText("说明");
-        help.setOnClickListener(v -> new AlertDialog.Builder(this).setTitle("心电记录 1.0.0")
+        help.setOnClickListener(v -> new AlertDialog.Builder(this).setTitle("心电记录 " + appVersion())
             .setMessage("使用已有项目账号登录。查看记录和云端分析需要联网。\n\n账号与心电数据仅发送至项目服务器：\n" + WebPolicy.ORIGIN + "\n\n应用不包含账号密码，不自动保存心电文件。点击下载时可自行选择 CSV 保存位置。\n\n本应用用于课程研究。")
             .setPositiveButton("知道了", null).show());
         Button reload = new Button(this); reload.setText("重连");
@@ -113,7 +116,26 @@ public final class MainActivity extends Activity {
     @Override public void onBackPressed() { goBack(); }
     @Override protected void onPause() { web.onPause(); web.pauseTimers(); CookieManager.getInstance().flush(); super.onPause(); }
     @Override protected void onResume() { super.onResume(); if (web != null) {web.onResume();web.resumeTimers();} }
-    @Override protected void onDestroy() { io.shutdownNow(); if(web != null) {web.stopLoading(); web.destroy();} super.onDestroy(); }
+    @Override protected void onDestroy() { io.shutdownNow(); if(reportPrinter!=null)reportPrinter.close(); if(web != null) {web.stopLoading(); web.destroy();} super.onDestroy(); }
+
+    private String appVersion(){
+        try{return getPackageManager().getPackageInfo(getPackageName(),0).versionName;}
+        catch(Exception ignored){return "";}
+    }
+
+    private void printReport(){
+        final String cookie=CookieManager.getInstance().getCookie(WebPolicy.ORIGIN);
+        // Only read an already-visible snapshot. No server text is interpolated into JS.
+        web.evaluateJavascript("typeof UserExperience==='undefined'?null:UserExperience.printDocument()", encoded -> {
+            if(isFinishing() || isDestroyed() || !WebPolicy.trusted(web.getUrl()) || cookie==null ||
+                !cookie.equals(CookieManager.getInstance().getCookie(WebPolicy.ORIGIN)))return;
+            try {
+                Object result=new JSONTokener(encoded).nextValue();
+                if(result instanceof String)reportPrinter.print((String)result);
+                else Toast.makeText(this,"报告已失效，请重新打开预览",Toast.LENGTH_LONG).show();
+            } catch(Exception ignored){Toast.makeText(this,"无法读取报告，请重试",Toast.LENGTH_LONG).show();}
+        });
+    }
 
     private final class Client extends WebViewClient {
         @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
@@ -132,6 +154,10 @@ public final class MainActivity extends Activity {
         }
         @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
             Uri uri = request.getUrl();
+            if (request.isForMainFrame() && "ecg-report".equals(uri.getScheme()) && "print".equals(uri.getHost())) {
+                if (WebPolicy.trusted(view.getUrl()) && request.hasGesture()) printReport();
+                return true;
+            }
             if (request.isForMainFrame() && "ecg-export".equals(uri.getScheme()) && "download".equals(uri.getHost())) {
                 if (WebPolicy.trusted(view.getUrl()) && request.hasGesture()) prepareExport(uri);
                 else Toast.makeText(MainActivity.this,"请直接点击记录页的下载按钮",Toast.LENGTH_LONG).show();
@@ -186,6 +212,7 @@ public final class MainActivity extends Activity {
         progress.show();
         io.execute(() -> {
             String outcome="已保存 CSV";
+            boolean saved=false;
             HttpsURLConnection connection=null;
             File temporary=null;
             try {
@@ -208,10 +235,21 @@ public final class MainActivity extends Activity {
                     if(output==null)throw new Exception("无法写入所选位置");
                     ExportCopy.copy(input,output,temporary.length(),MAX_EXPORT_BYTES);
                 }
+                saved=true;
             } catch (Exception e) {outcome="保存未完成："+e.getMessage()+(discardDocument(destination)?"":"；请删除所选位置的不完整文件");}
             finally {if(connection!=null)connection.disconnect();if(temporary!=null)temporary.delete();}
             final String message=outcome;
-            runOnUiThread(() -> {if(!isFinishing()&&!isDestroyed()){progress.dismiss();Toast.makeText(this,message,Toast.LENGTH_LONG).show();}});
+            final boolean complete=saved;
+            runOnUiThread(() -> {
+                if(isFinishing()||isDestroyed())return;
+                progress.dismiss();
+                if(!complete){Toast.makeText(this,message,Toast.LENGTH_LONG).show();return;}
+                new AlertDialog.Builder(this).setTitle("CSV 已保存").setMessage("文件已保存到你选择的位置。")
+                    .setNegativeButton("完成",null).setPositiveButton("打开文件",(dialog,which)->{
+                        try {startActivity(new Intent(Intent.ACTION_VIEW).setDataAndType(destination,"text/csv").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION));}
+                        catch(Exception ignored){Toast.makeText(this,"没有可打开 CSV 的应用，可在文件管理器中找到已保存的文件",Toast.LENGTH_LONG).show();}
+                    }).show();
+            });
         });
     }
 }

@@ -1,0 +1,60 @@
+/* Shared report/help controls, with compact navigation scoped to phones. */
+.password-entry{display:flex;align-items:stretch;gap:8px}.password-entry input{min-width:0;flex:1}.password-entry button{flex:none;min-height:44px}
+.text-action{background:none;border:0;color:#087565;text-decoration:underline;min-height:44px;font:inherit;cursor:pointer}
+.record-export{display:flex;gap:8px;flex-wrap:wrap}.record-export .button{min-height:44px}
+#mobile-devices{display:none}
+.record-progress{background:#eef7f3;border-radius:12px;padding:14px 16px;margin:16px 0;color:#285d4b;line-height:1.8}
+.record-progress strong{font-size:16px}.record-progress p{margin:6px 0 0;font-size:13px}
+.record-progress[data-tone="attention"]{background:#fff6e8;color:#805821}
+.analysis-progress{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0 0;padding:0}
+.analysis-progress>div{display:block;min-width:0;border-top:1px solid #dce8e5;padding-top:12px}
+.analysis-progress dt{font-size:12px;color:#526f63}.analysis-progress dd{font-size:14px;line-height:1.7;margin:5px 0 0;overflow-wrap:anywhere}
+.record-details{padding:0;min-width:0}.record-details>summary,.first-steps>summary{cursor:pointer;min-height:48px;padding:16px;font-size:14px;font-weight:600;color:#355c51}
+.record-details>.stats{margin:0;padding:0 16px 16px;gap:12px}.record-details>.delivery{border:0;box-shadow:none}.record-details .stat{min-width:0}
+.term-help{margin:0 0 14px;border-bottom:1px solid #e1ebe7;font-size:13px;color:#526b62}.term-help>summary{min-height:44px;padding:10px 0;cursor:pointer}.term-help p{line-height:1.9;margin:0 0 12px}
+#result-updated{font-size:12px;margin:8px 0 14px;color:#526b62}
+.panel-heading h2 small{font-size:12px;font-weight:400;display:inline-block;color:#526b62}
+.report-dialog{width:min(760px,calc(100vw - 24px));max-width:760px;max-height:90svh;overflow:auto;padding:24px}
+.report-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.report-actions h2{margin:0}
+.report-table{width:100%;border-collapse:collapse;font-size:14px}.report-table caption{text-align:left;margin:14px 0;color:#526b62}
+.report-table th,.report-table td{border-bottom:1px solid #dce8e5;text-align:left;vertical-align:top;padding:10px 6px;overflow-wrap:anywhere}.report-table th{width:35%;font-weight:500}
+#report-wave{width:100%;height:auto;border:1px solid #dce8e5}#report-range,#report-note{font-size:12px;line-height:1.9}
+#help-dialog{max-width:min(520px,calc(100vw - 24px));max-height:85svh;overflow:auto}#help-dialog h3{font-size:15px;margin:22px 0 6px}#help-dialog p{font-size:14px;line-height:1.8}
+.wave-focus #record-details,.wave-focus #result-updated{display:none!important}
+@media(min-width:1440px){
+  #content{grid-template-areas:'tools tools' 'header header' 'updated updated' 'measurement model' 'wave model' 'history model' 'physiology model' 'beats model' 'details model'}
+  #result-updated{grid-area:updated}#record-details{grid-area:details}
+}
+@media(max-width:720px){
+  body{overscroll-behavior-y:contain}
+  #content #result-updated{order:1}#content .result-shortcuts{order:2}#content #measurement-panel{order:3}
+  #content #record-details{order:9}#content .record-tools{order:10}
+  #workspace-shell:not([data-mobile-view="records"]) #first-steps,
+  #workspace-shell:not([data-mobile-view="records"]) .record-shortcuts{display:none}
+  #workspace-shell[data-mobile-view="devices"] #mobile-devices{display:block}
+  #workspace-shell[data-mobile-view="devices"] .account-strip,
+  #workspace-shell[data-mobile-view="devices"] main>.page-heading,
+  #workspace-shell[data-mobile-view="devices"] #device-summary,
+  #workspace-shell[data-mobile-view="devices"] .filter-panel,
+  #workspace-shell[data-mobile-view="devices"] .workspace{display:none}
+  .first-steps{margin:0 0 20px;background:#fff}.first-steps>p,.first-steps>ol{margin:0;padding:0 18px 16px;font-size:13px;line-height:1.8}
+  .first-steps ol{list-style:none;counter-reset:guide}.first-steps li{counter-increment:guide;position:relative;padding:0 0 16px 34px}
+  .first-steps li::before{content:counter(guide);position:absolute;left:0;top:1px;width:24px;height:24px;line-height:24px;text-align:center;background:#e4f2eb;border-radius:50%;color:#087565;font-weight:600}
+  .first-steps li strong,.first-steps li span{display:block}.first-steps li span{color:#526b62;margin-top:4px}
+  .record-shortcuts{margin:0 0 18px}.quick-filters{display:flex;gap:8px;flex-wrap:wrap}.quick-filters .button{font-size:13px;min-height:44px;padding:10px 12px}
+  .quick-filters [aria-pressed="true"]{background:#e3f3eb;border-color:#80b7a3;color:#146b50}.record-shortcuts p{font-size:12px;line-height:1.7;margin:8px 0 0}
+  #pull-feedback:empty{display:none}.session-day{font-size:13px;color:#526b62;margin:20px 2px 12px;font-weight:500}
+  #device-summary .button{justify-self:start;align-self:flex-start;font-size:13px}
+  .device-entry{padding:20px;margin:16px 0}.device-entry h2{font-size:18px;margin:0 0 12px}.device-entry p{font-size:14px;line-height:1.8;margin:8px 0}.device-entry .muted{font-size:12px}.device-entry .button{margin-top:10px;width:100%}
+  .device-connection{color:#166b50;font-weight:600}.device-guidance{padding:20px;margin-top:20px}.device-guidance h2{font-size:16px}.device-guidance p,.device-guidance li{font-size:13px;line-height:1.9}.device-guidance ol{padding-left:20px}
+  #mobile-devices .page-heading h1{font-size:27px}.record-id{display:none}
+  .record-export{width:100%}.record-export .button{flex:1;font-size:13px;justify-content:center}
+  .analysis-progress{gap:14px}.record-details .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .report-dialog{padding:20px 16px}.report-table{font-size:13px}.report-actions .button{min-height:48px}
+}
+@media print{
+  body>*{display:none!important}body>#report-dialog[open]{display:block!important;position:static;inset:auto;width:auto;max-width:none;max-height:none;overflow:visible;margin:0;padding:0;border:0;box-shadow:none}
+  #report-dialog::backdrop{display:none}#report-dialog .report-actions,#report-feedback{display:none!important}
+  #report-dialog:before{content:'心电测量记录';display:block;font-size:24px;font-weight:bold;margin-bottom:16px}
+  .report-table tr,#report-wave{break-inside:avoid}
+}

@@ -4,20 +4,19 @@ var MobileUI = (() => {
   const narrow = window.matchMedia('(max-width: 720px)');
   const shell = $('workspace-shell');
   let current = 'records';
-  const scrollPositions = {records: 0, results: 0, account: 0};
-  const buttons = ['records', 'results', 'account'];
+  const scrollPositions = {records: 0, results: 0, devices: 0, account: 0};
+  const buttons = ['records', 'devices', 'account'];
 
   function paint() {
     shell.dataset.mobileView = current;
     for (const name of buttons) {
       const button = $('nav-' + name);
-      if (name === current) button.setAttribute('aria-current', 'page');
+      if (name === current || (name === 'records' && current === 'results')) button.setAttribute('aria-current', 'page');
       else button.removeAttribute('aria-current');
     }
-    $('nav-results').disabled = !state.selected;
   }
   function show(name, {load = true, focus = true} = {}) {
-    if (!buttons.includes(name) || (name === 'results' && !state.selected)) return false;
+    if (!Object.hasOwn(scrollPositions,name) || (name === 'results' && !state.selected)) return false;
     if (name !== 'results' && document.body?.classList.contains('wave-focus')) $('wave-focus').click();
     if (current !== name) {
       scrollPositions[current] = window.scrollY;
@@ -32,6 +31,7 @@ var MobileUI = (() => {
       if (!state.wave) detailFeedback('正在读取测量结果…');
       loadWave(); loadAnalysis();
     }
+    if (name === 'devices' && load && state.ready) refresh();
     requestAnimationFrame(draw);
     return true;
   }
@@ -47,11 +47,22 @@ var MobileUI = (() => {
   }
   function reset() {
     current = 'records';
-    for (const key of buttons) scrollPositions[key] = 0;
+    for (const key of Object.keys(scrollPositions)) scrollPositions[key] = 0;
     paint(); filtersChanged();
   }
   for (const name of buttons) $('nav-' + name).onclick = () => show(name);
   $('back-records').onclick = () => show('records');
+  // A chapter link must focus the destination for keyboard/screen-reader users.
+  for (const link of document.querySelectorAll('.result-shortcuts a')) {
+    link.addEventListener('click', event => {
+      const target = document.getElementById(link.hash.slice(1));
+      if (!target || target.hidden) return;
+      event.preventDefault();
+      target.setAttribute('tabindex', '-1');
+      target.focus({preventScroll: true});
+      target.scrollIntoView({behavior: 'auto', block: 'start'});
+    });
+  }
   $('account-install').onclick = () => $('pwa-install').click();
   const installed = window.matchMedia('(display-mode: standalone)');
   const syncInstall = () => {$('account-install').hidden = installed.matches || window.navigator.standalone === true;};
@@ -66,7 +77,7 @@ var MobileUI = (() => {
   $('filter-panel').open = !narrow.matches;
   syncInstall(); paint();
   return {
-    reset, selectionChanged, filtersChanged,
+    reset, selectionChanged, filtersChanged, show,
     needsDetail: () => !narrow.matches || current === 'results',
     openResult: () => narrow.matches && show('results'),
   };
