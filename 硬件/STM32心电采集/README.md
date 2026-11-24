@@ -2,13 +2,15 @@
 
 STM32F103C8 固件，连接心电模块并向树莓派发送采样数据。Keil 工程及厂商目录保持原结构。
 
+[项目首页](../../README.md) · [硬件导航](../README.md) · [资料分类](Doc/README.md)
+
 | 位置 | 内容 |
 | --- | --- |
 | [Project/my_bme_work.uvprojx](Project/my_bme_work.uvprojx) | Keil 工程入口 |
 | [User/](User/) | 主程序、外设初始化与中断 |
 | [APP/](APP/) | 应用层采集和传输实现 |
 | [Libraries/](Libraries/) | CMSIS 与 STM32 HAL，保留厂商结构 |
-| [Doc/](Doc/) | 接线、引脚、协议与阶段验证资料 |
+| [Doc/](Doc/README.md) | 接线、引脚、协议与历史阶段资料分类 |
 
 先查 [共同接口约定](../../docs/接口约定.md)，再结合 [七字节串口协议](Doc/2026-10-27_七字节串口协议.txt)、[PC13/SW2 按键说明](Doc/2026-10-27_PC13按键切换说明.txt) 和 [接线图](Doc/2026-10-14_STM32与AD8232接线图.png) 阅读代码。
 
