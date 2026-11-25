@@ -1,0 +1,63 @@
+{
+  "kind": "local-verification-v1",
+  "generated_utc": "2026-11-25T06:32:48+00:00",
+  "environment": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.12.14",
+    "node": "v24.22.1",
+    "adapted_windows_sandbox": true
+  },
+  "suites": [
+    {
+      "suite": "pi",
+      "command": "python -m unittest discover -s tests -p test_*.py",
+      "working_directory": "树莓派心电终端",
+      "returncode": 1,
+      "seconds": 53.4,
+      "ran": 374,
+      "passed": 362,
+      "failed": 0,
+      "errors": 9,
+      "skipped": 3,
+      "blocked": "named pipe"
+    },
+    {
+      "suite": "cloud",
+      "command": "python -m unittest discover -s tests -p test_*.py",
+      "working_directory": "心电云端平台",
+      "returncode": 0,
+      "seconds": 125.6,
+      "ran": 170,
+      "passed": 162,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 8,
+      "blocked": ""
+    },
+    {
+      "suite": "web",
+      "command": "node <each tests/*.test.cjs>",
+      "working_directory": "心电云端平台",
+      "returncode": 0,
+      "seconds": 0.9,
+      "ran": 101,
+      "passed": 101,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "blocked": ""
+    }
+  ],
+  "totals": {
+    "ran": 645,
+    "passed": 625,
+    "failed": 0,
+    "errors": 9,
+    "skipped": 11,
+    "blocked": [
+      "pi"
+    ],
+    "unexpected": 0
+  },
+  "note": "Software test results only. They do not prove device, deployment or clinical verification."
+}
